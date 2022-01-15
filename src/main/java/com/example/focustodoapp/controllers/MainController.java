@@ -1,0 +1,201 @@
+package com.example.focustodoapp.controllers;
+
+import com.example.focustodoapp.models.ModelInterface;
+import javafx.animation.FadeTransition;
+import javafx.animation.TranslateTransition;
+import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
+
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.StackPane;
+import javafx.util.Duration;
+
+import java.net.URL;
+import java.util.ResourceBundle;
+
+public class MainController implements Initializable {
+    private boolean opacityPaneState;
+    private boolean drawerPaneState;
+
+    ModelInterface modelInterface = new ModelInterface();
+
+    @FXML
+    private ImageView drawerImage, loginPaneClose;   // customowy guzik
+
+    @FXML
+    private AnchorPane opacityPane, drawerPane, loginOpacityPane;
+
+    @FXML
+    private StackPane loginPane;
+
+    @FXML
+    private Label isConnected;
+
+    @FXML
+    private Button loginPageButton;
+
+    @Override
+    public void initialize(URL url, ResourceBundle resourceBundle) {
+//        ToDo: only for debugging purposes!
+//         Remove when the project is done
+        if (modelInterface.isDbConnected()) {
+            isConnected.setStyle("-fx-background-color: green");
+        } else {
+            isConnected.setStyle("-fx-background-color: red");
+        }
+
+        opacityPaneState = false;
+        drawerPaneState = false;
+        loginOpacityPane.setVisible(false);
+        loginPane.setVisible(false);
+        initOpacityPane();
+
+        TranslateTransition translateTransition =  new TranslateTransition(Duration.seconds(0.3), drawerPane);
+        translateTransition.setByX(-600);
+        translateTransition.play();
+
+        drawerImage.setOnMouseClicked(event -> {
+            drawerImageClickHandler();
+        });
+
+        opacityPane.setOnMouseClicked(event -> {
+            opacityPaneClickHandler();
+        });
+
+        loginOpacityPane.setOnMouseClicked(event -> {
+            loginOpacityPaneClickHandler();
+        });
+
+        loginPageButton.setOnMouseClicked(event -> {
+            showLoginPane();
+        });
+
+        loginPaneClose.setOnMouseClicked(event -> {
+            hideLoginPane();
+        });
+
+//        ToDo:
+//         1) Wyświetla się okno logowania z wyborem:
+//            - zarejestruj
+//            - kontynuuj bez logowania (dane będą trzymane w pamięci i po zamknięciu aplikacji zostaną utracone)
+//            - zarejestrowaniu możemy od razu się zalogować
+//         2) Po zalogowaniu pojawia się ekran główny, w którym mamy przyciski:
+//            - Dodaj projekt
+//            - Dodaj zadanie (do wyboru projekt)
+//         3) Możemy nawigować po różnych zakładkach (otwarte menu powinno przesuwać cały widok w prawą stronę)
+    }
+
+    private void showLoginPane() {
+        loginPane.setVisible(true);
+        showOpacity(loginOpacityPane);
+    }
+
+    private void hideLoginPane() {
+        loginPane.setVisible(false);
+        hideOpacity(loginOpacityPane);
+    }
+
+    private void initOpacityPane() {
+        opacityPane.setVisible(false);
+
+        FadeTransition fadeTransition = new FadeTransition(Duration.seconds(0.3), opacityPane);
+        fadeTransition.setFromValue(1);
+        fadeTransition.setToValue(0);
+        fadeTransition.play();
+    }
+
+    private void drawerImageClickHandler() {
+        drawerPaneState = !drawerPaneState;
+        if (drawerPaneState) {
+            showDrawer();
+            FadeTransition fadeTransition = showOpacity(opacityPane);
+            fadeTransition.setOnFinished(event -> {
+                opacityPaneState = true;
+            });
+        } else {
+            hideDrawer();
+            FadeTransition fadeTransition = hideOpacity(opacityPane);
+            fadeTransition.setOnFinished(event -> {
+                opacityPane.setVisible(false);
+                opacityPaneState = false;
+            });
+        }
+    }
+
+    private void opacityPaneClickHandler() {
+        opacityPaneState = !opacityPaneState;
+        if (opacityPaneState) {
+            FadeTransition fadeTransition = showOpacity(opacityPane);
+            fadeTransition.setOnFinished(event -> {
+                opacityPaneState = true;
+            });
+            showDrawer();
+        } else {
+            FadeTransition fadeTransition = hideOpacity(opacityPane);
+            fadeTransition.setOnFinished(event -> {
+                opacityPane.setVisible(false);
+                opacityPaneState = false;
+            });
+            hideDrawer();
+        }
+    }
+
+    private void loginOpacityPaneClickHandler() {
+        loginPane.setVisible(false);
+        FadeTransition fadeTransition = hideOpacity(loginOpacityPane, 0.01);
+        fadeTransition.setOnFinished(event -> {
+            loginOpacityPane.setVisible(false);
+        });
+    }
+
+    public void showDrawer() {
+        TranslateTransition translateTransition = new TranslateTransition(Duration.seconds(0.3), drawerPane);
+        translateTransition.setByX(+600);
+        translateTransition.play();
+
+        translateTransition.setOnFinished(event -> {
+            drawerPaneState = true;
+        });
+    }
+
+    public void hideDrawer() {
+        TranslateTransition translateTransition =  new TranslateTransition(Duration.seconds(0.3), drawerPane);
+        translateTransition.setByX(-600);
+        translateTransition.play();
+
+        translateTransition.setOnFinished(event -> {
+            drawerPaneState = false;
+        });
+    }
+
+    public FadeTransition showOpacity(AnchorPane pane) {
+        pane.setVisible(true);
+
+        FadeTransition fadeTransition = new FadeTransition(Duration.seconds(0.3), pane);
+        fadeTransition.setFromValue(0);
+        fadeTransition.setToValue(0.15);
+        fadeTransition.play();
+        return fadeTransition;
+    }
+
+    public FadeTransition hideOpacity(AnchorPane pane) {
+        double defaultDuration = 0.3;
+        return doHideOpacity(pane, defaultDuration);
+    }
+
+    public FadeTransition hideOpacity(AnchorPane pane, double duration) {
+        return doHideOpacity(pane, duration);
+    }
+
+    private FadeTransition doHideOpacity(AnchorPane pane, double duration) {
+        pane.setVisible(true);
+        FadeTransition fadeTransition = new FadeTransition(Duration.seconds(duration), pane);
+        fadeTransition.setFromValue(0.15);
+        fadeTransition.setToValue(0);
+        fadeTransition.play();
+        return fadeTransition;
+    }
+}
