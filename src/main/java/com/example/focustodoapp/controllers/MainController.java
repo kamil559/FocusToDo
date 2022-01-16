@@ -28,22 +28,22 @@ public class MainController implements Initializable {
     ModelInterface modelInterface = new ModelInterface();
 
     @FXML
-    private ImageView drawerImage, loginPaneClose;   // customowy guzik
+    private ImageView drawerImage, loginWindowClose;   // customowy guzik
 
     @FXML
-    private AnchorPane mainPane, opacityPane, drawerPane, loginOpacityPane;
+    private AnchorPane mainPane, opacityPane, drawerPane, loginOpacityPane, signInPane, signUpPane;
 
     @FXML
-    private StackPane loginPane;
+    private StackPane loginWindow;
 
     @FXML
     private Label isConnected;
 
     @FXML
-    private Button loginPageButton, loginSubmitButton;
+    private Button loginPageButton, loginSubmitButton, openSignUpPane, backToSignInPane;
 
     @FXML
-    private TextField usernameLoginInput, passwordLoginInput;
+    private TextField usernameLoginInput, passwordLoginInput, usernameSignUpInput, passwordSignUpInput;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -58,7 +58,7 @@ public class MainController implements Initializable {
         opacityPaneState = false;
         drawerPaneState = false;
         loginOpacityPane.setVisible(false);
-        loginPane.setVisible(false);
+        loginWindow.setVisible(false);
         initOpacityPane();
 
         TranslateTransition translateTransition =  new TranslateTransition(Duration.seconds(0.3), drawerPane);
@@ -77,9 +77,8 @@ public class MainController implements Initializable {
             @Override
             public void handle(KeyEvent keyEvent) {
                 if (keyEvent.getCode() == KeyCode.ESCAPE) {
-//                    todo: or registerPane.isVisible()
-                    if (loginPane.isVisible()) {
-                        hideLoginPane();
+                    if (loginWindow.isVisible()) {
+                        hideLoginWindow();
                     } else if (drawerPaneState) {
                         hideDrawer();
                         FadeTransition fadeTransition = hideOpacity(opacityPane);
@@ -107,7 +106,27 @@ public class MainController implements Initializable {
     }
 
     private void setSignUpEvents() {
+        signUpPane.setVisible(false);
 
+        openSignUpPane.setOnMouseClicked(event -> {
+            showSignUpPane();
+        });
+
+        backToSignInPane.setOnMouseClicked(event -> {
+            hideSignUpPane();
+        });
+    }
+
+    private void showSignUpPane() {
+        signInPane.setVisible(false);
+        signUpPane.setVisible(true);
+    }
+
+    private void hideSignUpPane() {
+        signUpPane.setVisible(false);
+        signInPane.setVisible(true);
+        usernameSignUpInput.clear();
+        passwordSignUpInput.clear();
     }
 
     private void setSignInEvents() {
@@ -116,11 +135,11 @@ public class MainController implements Initializable {
         });
 
         loginPageButton.setOnMouseClicked(event -> {
-            showLoginPane();
+            showLoginWindow();
         });
 
-        loginPaneClose.setOnMouseClicked(event -> {
-            hideLoginPane();
+        loginWindowClose.setOnMouseClicked(event -> {
+            hideLoginWindow();
         });
 
         loginSubmitButton.setOnMouseClicked(event -> {
@@ -155,13 +174,13 @@ public class MainController implements Initializable {
         }
     }
 
-    private void showLoginPane() {
-        loginPane.setVisible(true);
+    private void showLoginWindow() {
+        loginWindow.setVisible(true);
         showOpacity(loginOpacityPane);
     }
 
-    private void hideLoginPane() {
-        loginPane.setVisible(false);
+    private void hideLoginWindow() {
+        loginWindow.setVisible(false);
         usernameLoginInput.clear();
         passwordLoginInput.clear();
         hideLoginOpacityPane();
@@ -213,7 +232,7 @@ public class MainController implements Initializable {
     }
 
     private void loginOpacityPaneClickHandler() {
-        hideLoginPane();
+        hideLoginWindow();
     }
 
     private void hideLoginOpacityPane() {
