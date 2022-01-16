@@ -11,6 +11,7 @@ module com.example.focustodoapp {
     requires eu.hansolo.tilesfx;
     requires java.sql;
     requires org.xerial.sqlitejdbc;
+    requires jbcrypt;
 
     opens com.example.focustodoapp to javafx.fxml;
     exports com.example.focustodoapp;

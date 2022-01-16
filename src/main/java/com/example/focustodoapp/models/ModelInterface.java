@@ -7,7 +7,7 @@ import java.sql.*;
 public class ModelInterface {
     Connection connection;
 
-    public ModelInterface() {
+    public void setConnection() {
         connection = SQLiteConnection.Connector();
 
         if (connection == null) {
@@ -16,12 +16,16 @@ public class ModelInterface {
         }
     }
 
-    public boolean isDbConnected() {
-        try {
-            return !connection.isClosed();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+    public Connection getConnection() throws SQLException {
+        if (connection == null || connection.isClosed()) {
+            setConnection();
+        }
+        return connection;
+    }
+
+    public void closeConnection() throws SQLException {
+        if (connection != null) {
+            connection.close();
         }
     }
 }

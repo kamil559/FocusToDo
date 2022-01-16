@@ -1,60 +1,56 @@
 package com.example.focustodoapp.controllers;
 
+import com.example.focustodoapp.dtos.User;
+import com.example.focustodoapp.errors.DatabaseException;
+import com.example.focustodoapp.errors.ValidationError;
 import com.example.focustodoapp.models.ModelInterface;
+import com.example.focustodoapp.models.UserModel;
 import javafx.animation.FadeTransition;
+import javafx.animation.PauseTransition;
 import javafx.animation.TranslateTransition;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.text.Text;
 import javafx.util.Duration;
 
 import java.net.URL;
-import java.util.Objects;
-import java.util.ResourceBundle;
+import java.util.*;
 
 public class MainController implements Initializable {
     private boolean opacityPaneState;
     private boolean drawerPaneState;
-
-    ModelInterface modelInterface = new ModelInterface();
-
-    @FXML
-    private ImageView drawerImage, loginWindowClose;   // customowy guzik
+    private User user;
 
     @FXML
-    private AnchorPane mainPane, opacityPane, drawerPane, loginOpacityPane, signInPane, signUpPane;
+    private ImageView drawerImage, loginWindowClose, loginWindowClose2, closeSuccessAlertButton, closeErrorAlertButton;
+
+    @FXML
+    private AnchorPane mainPane, opacityPane, drawerPane, loginOpacityPane, signInPane, signUpPane, successAlertPane,
+            errorAlertPane;
 
     @FXML
     private StackPane loginWindow;
 
     @FXML
-    private Label isConnected;
+    private Text successAlert, errorAlert;
 
     @FXML
-    private Button loginPageButton, loginSubmitButton, openSignUpPane, backToSignInPane;
+    private Button loginPageButton, signInSubmitButton, openSignUpPane, backToSignInPane, signUpSubmitButton;
 
     @FXML
-    private TextField usernameLoginInput, passwordLoginInput, usernameSignUpInput, passwordSignUpInput;
+    private TextField usernameSignInInput, passwordSignInInput, usernameSignUpInput, passwordSignUpInput;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-//        ToDo: only for debugging purposes!
-//         Remove when the project is done
-        if (modelInterface.isDbConnected()) {
-            isConnected.setStyle("-fx-background-color: green");
-        } else {
-            isConnected.setStyle("-fx-background-color: red");
-        }
-
         opacityPaneState = false;
         drawerPaneState = false;
         loginOpacityPane.setVisible(false);
@@ -94,6 +90,14 @@ public class MainController implements Initializable {
         setSignInEvents();
         setSignUpEvents();
 
+        closeSuccessAlertButton.setOnMouseClicked(event -> {
+            hideSuccessAlert();
+        });
+
+        closeErrorAlertButton.setOnMouseClicked(event -> {
+            hideErrorAlert();
+        });
+
 //        ToDo:
 //         1) Wyświetla się okno logowania z wyborem:
 //            - zarejestruj
@@ -103,6 +107,26 @@ public class MainController implements Initializable {
 //            - Dodaj projekt
 //            - Dodaj zadanie (do wyboru projekt)
 //         3) Możemy nawigować po różnych zakładkach (otwarte menu powinno przesuwać cały widok w prawą stronę)
+    }
+
+    private void signUpHandler() {
+        String username = usernameSignUpInput.getText();
+        String password = passwordSignUpInput.getText();
+        UserModel userModel = new UserModel();
+        List<String> errors = new ArrayList<>();
+
+        try {
+            userModel.storeUser(username, password);
+            showSuccessAlert("Pomyślnie utworzono użytkownika", 5);
+            showSignInPane();
+        } catch (DatabaseException | ValidationError e) {
+            errors.add(e.getMessage());
+        } finally {
+            if (!errors.isEmpty()) {
+                String joinedErrors = String.join("\n", errors);
+                showErrorAlert(joinedErrors, 10);
+            }
+        }
     }
 
     private void setSignUpEvents() {
@@ -115,6 +139,36 @@ public class MainController implements Initializable {
         backToSignInPane.setOnMouseClicked(event -> {
             hideSignUpPane();
         });
+
+        signUpSubmitButton.setOnMouseClicked(event -> {
+            signUpHandler();
+        });
+
+        usernameSignUpInput.setOnKeyPressed(new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent keyEvent) {
+                if (keyEvent.getCode() == KeyCode.ENTER) {
+                    signUpSubmitButton.requestFocus();
+                    signUpHandler();
+                }
+            }
+        });
+
+        passwordSignUpInput.setOnKeyPressed(new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent keyEvent) {
+                if (keyEvent.getCode() == KeyCode.ENTER) {
+                    signUpSubmitButton.requestFocus();
+                    signUpHandler();
+                }
+            }
+        });
+    }
+
+    private void showSignInPane() {
+        usernameSignInInput.clear();
+        passwordSignInInput.clear();
+        hideSignUpPane();
     }
 
     private void showSignUpPane() {
@@ -142,47 +196,57 @@ public class MainController implements Initializable {
             hideLoginWindow();
         });
 
-        loginSubmitButton.setOnMouseClicked(event -> {
-            loginHandler();
+        loginWindowClose2.setOnMouseClicked(event -> {
+            hideLoginWindow();
         });
 
-        usernameLoginInput.setOnKeyPressed(new EventHandler<KeyEvent>() {
+        signInSubmitButton.setOnMouseClicked(event -> {
+            signInHandler();
+        });
+
+        usernameSignInInput.setOnKeyPressed(new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent keyEvent) {
                 if (keyEvent.getCode() == KeyCode.ENTER) {
-                    loginHandler();
+                    signInSubmitButton.requestFocus();
+                    signInHandler();
                 }
             }
         });
 
-        passwordLoginInput.setOnKeyPressed(new EventHandler<KeyEvent>() {
+        passwordSignInInput.setOnKeyPressed(new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent keyEvent) {
                 if (keyEvent.getCode() == KeyCode.ENTER) {
-                    loginHandler();
+                    signInSubmitButton.requestFocus();
+                    signInHandler();
                 }
             }
         });
     }
 
-    private void loginHandler() {
-        String username = usernameLoginInput.getText();
-        String password = passwordLoginInput.getText();
+    private void signInHandler() {
+        String username = usernameSignInInput.getText();
+        String password = passwordSignInInput.getText();
 
         if (Objects.equals(username, "abc") & Objects.equals(password, "zaq1@WSX")) {
-            usernameLoginInput.setText("Zalogowano poprawnie!");
+            usernameSignInInput.setText("Zalogowano poprawnie!");
         }
     }
 
     private void showLoginWindow() {
+        signUpPane.setVisible(false);
         loginWindow.setVisible(true);
+        signInPane.setVisible(true);
         showOpacity(loginOpacityPane);
     }
 
     private void hideLoginWindow() {
         loginWindow.setVisible(false);
-        usernameLoginInput.clear();
-        passwordLoginInput.clear();
+        usernameSignInInput.clear();
+        passwordSignInInput.clear();
+        usernameSignUpInput.clear();
+        passwordSignUpInput.clear();
         hideLoginOpacityPane();
     }
 
@@ -288,5 +352,60 @@ public class MainController implements Initializable {
         fadeTransition.setToValue(0);
         fadeTransition.play();
         return fadeTransition;
+    }
+
+    private void showSuccessAlert(String message) {
+        hideErrorAlert();
+        doShowAlert(successAlertPane, successAlert, message, 0);
+    }
+
+    private void showSuccessAlert(String message, Integer duration) {
+        // success alert with duration, after which it will disappear
+        hideErrorAlert();
+        doShowAlert(successAlertPane, successAlert, message, duration);
+    }
+
+    private void hideSuccessAlert() { doHideAlert(successAlertPane, successAlert); }
+
+    private void showErrorAlert(String message) {
+        hideSuccessAlert();
+        doShowAlert(errorAlertPane, errorAlert, message, 0);
+    }
+
+    private void showErrorAlert(String message, Integer duration) {
+        hideSuccessAlert();
+        doShowAlert(errorAlertPane, errorAlert, message, duration);
+    }
+
+    private void hideErrorAlert() { doHideAlert(errorAlertPane, errorAlert); }
+
+    private void doShowAlert(AnchorPane alertPane, Text alertTextBox, String message, double duration) {
+        FadeTransition fadeTransition = new FadeTransition(Duration.seconds(0.1), alertPane);
+        fadeTransition.setFromValue(0);
+        fadeTransition.setToValue(0.75);
+        fadeTransition.setOnFinished(event -> {
+            alertTextBox.setText(message);
+            alertPane.setVisible(true);
+
+            if (duration > 0) {
+                PauseTransition pauseTransition = new PauseTransition(Duration.seconds(duration));
+                pauseTransition.setOnFinished(event2 -> {
+                    doHideAlert(alertPane, alertTextBox);
+                });
+                pauseTransition.play();
+            }
+        });
+        fadeTransition.play();
+    }
+
+    private void doHideAlert(AnchorPane alertPane, Text alertTextBox) {
+        FadeTransition fadeTransition = new FadeTransition(Duration.seconds(0.3), alertPane);
+        fadeTransition.setFromValue(0.75);
+        fadeTransition.setToValue(0);
+        fadeTransition.setOnFinished(event -> {
+            alertPane.setVisible(false);
+            alertTextBox.setText("");
+        });
+        fadeTransition.play();
     }
 }
