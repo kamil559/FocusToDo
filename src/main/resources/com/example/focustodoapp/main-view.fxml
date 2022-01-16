@@ -15,7 +15,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane prefHeight="500.0" prefWidth="800.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.focustodoapp.controllers.MainController">
+<AnchorPane fx:id="mainPane" prefHeight="500.0" prefWidth="800.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.focustodoapp.controllers.MainController">
    <children>
       <AnchorPane prefHeight="46.0" prefWidth="181.0" style="-fx-background-color: #ffffff; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 5, 0, 0, 0); -fx-view-order: 2;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
          <children>
@@ -106,9 +106,9 @@
          <children>
             <AnchorPane maxHeight="380.0" maxWidth="300.0" minHeight="380.0" minWidth="300.0" prefHeight="380.0" prefWidth="300.0" style="-fx-background-color: #fff; -fx-view-order: 0; -fx-border-radius: 10px; -fx-background-radius: 10px;">
                <children>
-                  <TextField alignment="BASELINE_LEFT" layoutX="65.0" layoutY="150.0" promptText="Login" AnchorPane.leftAnchor="65.0" AnchorPane.rightAnchor="65.0" AnchorPane.topAnchor="150.0" />
-                  <PasswordField layoutX="65.0" layoutY="190.0" promptText="Hasło" AnchorPane.leftAnchor="65.0" AnchorPane.rightAnchor="65.0" AnchorPane.topAnchor="190.0" />
-                  <Button fx:id="signInButton1" layoutX="65.0" layoutY="237.0" mnemonicParsing="false" prefHeight="32.0" prefWidth="171.0" style="-fx-background-color: #fe5c44;" text="Zaloguj się" textFill="WHITE" AnchorPane.leftAnchor="65.0" AnchorPane.rightAnchor="65.0" AnchorPane.topAnchor="237.0">
+                  <TextField fx:id="usernameLoginInput" alignment="BASELINE_LEFT" layoutX="65.0" layoutY="150.0" promptText="Login" AnchorPane.leftAnchor="65.0" AnchorPane.rightAnchor="65.0" AnchorPane.topAnchor="150.0" />
+                  <PasswordField fx:id="passwordLoginInput" layoutX="65.0" layoutY="190.0" promptText="Hasło" AnchorPane.leftAnchor="65.0" AnchorPane.rightAnchor="65.0" AnchorPane.topAnchor="190.0" />
+                  <Button fx:id="loginSubmitButton" layoutX="65.0" layoutY="237.0" mnemonicParsing="false" prefHeight="32.0" prefWidth="171.0" style="-fx-background-color: #fe5c44;" text="Zaloguj się" textFill="WHITE" AnchorPane.leftAnchor="65.0" AnchorPane.rightAnchor="65.0" AnchorPane.topAnchor="237.0">
                      <font>
                         <Font name="Ubuntu" size="15.0" />
                      </font>

@@ -3,17 +3,22 @@ package com.example.focustodoapp.controllers;
 import com.example.focustodoapp.models.ModelInterface;
 import javafx.animation.FadeTransition;
 import javafx.animation.TranslateTransition;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 
 import java.net.URL;
+import java.util.Objects;
 import java.util.ResourceBundle;
 
 public class MainController implements Initializable {
@@ -26,7 +31,7 @@ public class MainController implements Initializable {
     private ImageView drawerImage, loginPaneClose;   // customowy guzik
 
     @FXML
-    private AnchorPane opacityPane, drawerPane, loginOpacityPane;
+    private AnchorPane mainPane, opacityPane, drawerPane, loginOpacityPane;
 
     @FXML
     private StackPane loginPane;
@@ -35,7 +40,10 @@ public class MainController implements Initializable {
     private Label isConnected;
 
     @FXML
-    private Button loginPageButton;
+    private Button loginPageButton, loginSubmitButton;
+
+    @FXML
+    private TextField usernameLoginInput, passwordLoginInput;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -65,17 +73,27 @@ public class MainController implements Initializable {
             opacityPaneClickHandler();
         });
 
-        loginOpacityPane.setOnMouseClicked(event -> {
-            loginOpacityPaneClickHandler();
+        mainPane.setOnKeyPressed(new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent keyEvent) {
+                if (keyEvent.getCode() == KeyCode.ESCAPE) {
+//                    todo: or registerPane.isVisible()
+                    if (loginPane.isVisible()) {
+                        hideLoginPane();
+                    } else if (drawerPaneState) {
+                        hideDrawer();
+                        FadeTransition fadeTransition = hideOpacity(opacityPane);
+                        fadeTransition.setOnFinished(event -> {
+                            opacityPane.setVisible(false);
+                            opacityPaneState = false;
+                        });
+                    }
+                }
+            }
         });
 
-        loginPageButton.setOnMouseClicked(event -> {
-            showLoginPane();
-        });
-
-        loginPaneClose.setOnMouseClicked(event -> {
-            hideLoginPane();
-        });
+        setSignInEvents();
+        setSignUpEvents();
 
 //        ToDo:
 //         1) Wyświetla się okno logowania z wyborem:
@@ -88,6 +106,55 @@ public class MainController implements Initializable {
 //         3) Możemy nawigować po różnych zakładkach (otwarte menu powinno przesuwać cały widok w prawą stronę)
     }
 
+    private void setSignUpEvents() {
+
+    }
+
+    private void setSignInEvents() {
+        loginOpacityPane.setOnMouseClicked(event -> {
+            loginOpacityPaneClickHandler();
+        });
+
+        loginPageButton.setOnMouseClicked(event -> {
+            showLoginPane();
+        });
+
+        loginPaneClose.setOnMouseClicked(event -> {
+            hideLoginPane();
+        });
+
+        loginSubmitButton.setOnMouseClicked(event -> {
+            loginHandler();
+        });
+
+        usernameLoginInput.setOnKeyPressed(new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent keyEvent) {
+                if (keyEvent.getCode() == KeyCode.ENTER) {
+                    loginHandler();
+                }
+            }
+        });
+
+        passwordLoginInput.setOnKeyPressed(new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent keyEvent) {
+                if (keyEvent.getCode() == KeyCode.ENTER) {
+                    loginHandler();
+                }
+            }
+        });
+    }
+
+    private void loginHandler() {
+        String username = usernameLoginInput.getText();
+        String password = passwordLoginInput.getText();
+
+        if (Objects.equals(username, "abc") & Objects.equals(password, "zaq1@WSX")) {
+            usernameLoginInput.setText("Zalogowano poprawnie!");
+        }
+    }
+
     private void showLoginPane() {
         loginPane.setVisible(true);
         showOpacity(loginOpacityPane);
@@ -95,7 +162,9 @@ public class MainController implements Initializable {
 
     private void hideLoginPane() {
         loginPane.setVisible(false);
-        hideOpacity(loginOpacityPane);
+        usernameLoginInput.clear();
+        passwordLoginInput.clear();
+        hideLoginOpacityPane();
     }
 
     private void initOpacityPane() {
@@ -144,7 +213,10 @@ public class MainController implements Initializable {
     }
 
     private void loginOpacityPaneClickHandler() {
-        loginPane.setVisible(false);
+        hideLoginPane();
+    }
+
+    private void hideLoginOpacityPane() {
         FadeTransition fadeTransition = hideOpacity(loginOpacityPane, 0.01);
         fadeTransition.setOnFinished(event -> {
             loginOpacityPane.setVisible(false);
