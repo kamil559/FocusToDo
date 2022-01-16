@@ -18,7 +18,6 @@ public class FocusToDoApplication extends Application {
         String componentName = Component.getComponent(Component.MAIN);
         FXMLLoader fxmlLoader = new FXMLLoader(FocusToDoApplication.class.getResource(componentName));
         Parent root = fxmlLoader.load();
-//        primaryStage.initStyle(StageStyle.UNDECORATED);
         root.setOnMousePressed(event -> {
             x = event.getSceneX();
             y = event.getSceneY();
@@ -34,7 +33,6 @@ public class FocusToDoApplication extends Application {
     }
 
     public static void main(String[] args) {
-//        Class.forName()
         launch();
     }
 }

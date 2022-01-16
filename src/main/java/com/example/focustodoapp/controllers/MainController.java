@@ -1,9 +1,10 @@
 package com.example.focustodoapp.controllers;
 
+import com.example.focustodoapp.dtos.AuthUser;
 import com.example.focustodoapp.dtos.User;
+import com.example.focustodoapp.errors.AuthenticationError;
 import com.example.focustodoapp.errors.DatabaseException;
 import com.example.focustodoapp.errors.ValidationError;
-import com.example.focustodoapp.models.ModelInterface;
 import com.example.focustodoapp.models.UserModel;
 import javafx.animation.FadeTransition;
 import javafx.animation.PauseTransition;
@@ -44,7 +45,7 @@ public class MainController implements Initializable {
     private Text successAlert, errorAlert;
 
     @FXML
-    private Button loginPageButton, signInSubmitButton, openSignUpPane, backToSignInPane, signUpSubmitButton;
+    private Button loginPageButton, signOutButton, signInSubmitButton, openSignUpPane, backToSignInPane, signUpSubmitButton;
 
     @FXML
     private TextField usernameSignInInput, passwordSignInInput, usernameSignUpInput, passwordSignUpInput;
@@ -96,6 +97,10 @@ public class MainController implements Initializable {
 
         closeErrorAlertButton.setOnMouseClicked(event -> {
             hideErrorAlert();
+        });
+
+        signOutButton.setOnMouseClicked(event -> {
+            signOutHandler();
         });
 
 //        ToDo:
@@ -225,13 +230,38 @@ public class MainController implements Initializable {
         });
     }
 
+    private void signOutHandler() {
+        this.user = null;
+        clearLoginWindowData();
+        signOutButton.setVisible(false);
+        loginPageButton.setVisible(true);
+        showSuccessAlert("Wylogowano pomyślnie", 5);
+    }
+
     private void signInHandler() {
         String username = usernameSignInInput.getText();
         String password = passwordSignInInput.getText();
 
-        if (Objects.equals(username, "abc") & Objects.equals(password, "zaq1@WSX")) {
-            usernameSignInInput.setText("Zalogowano poprawnie!");
+        UserModel userModel = new UserModel();
+        List<String> errors = new ArrayList<>();
+
+        try {
+            AuthUser authUser = userModel.getAuthUser(username);
+            User user = userModel.authenticateUser(authUser, password);
+            showSuccessAlert("Zalogowano pomyślnie", 5);
+            this.user = user;
+            hideLoginWindow();
+            loginPageButton.setVisible(false);
+            signOutButton.setVisible(true);
+        } catch (DatabaseException | AuthenticationError e) {
+            errors.add(e.getMessage());
+        } finally {
+            if (!errors.isEmpty()) {
+                String joinedErrors = String.join("\n", errors);
+                showErrorAlert(joinedErrors, 10);
+            }
         }
+
     }
 
     private void showLoginWindow() {
@@ -243,6 +273,10 @@ public class MainController implements Initializable {
 
     private void hideLoginWindow() {
         loginWindow.setVisible(false);
+        clearLoginWindowData();
+    }
+
+    private void clearLoginWindowData() {
         usernameSignInInput.clear();
         passwordSignInInput.clear();
         usernameSignUpInput.clear();

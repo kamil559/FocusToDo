@@ -1,7 +1,9 @@
 package com.example.focustodoapp.models;
 
 import com.example.focustodoapp.constants.ErrorCode;
+import com.example.focustodoapp.dtos.AuthUser;
 import com.example.focustodoapp.dtos.User;
+import com.example.focustodoapp.errors.AuthenticationError;
 import com.example.focustodoapp.errors.DatabaseException;
 import com.example.focustodoapp.errors.ValidationError;
 
@@ -69,6 +71,25 @@ public class UserModel extends ModelInterface {
         }
     }
 
+    public AuthUser getAuthUser(String username) throws DatabaseException {
+        String query = "SELECT id, username, password FROM User WHERE UPPER(username) LIKE ?";
+        try {
+            PreparedStatement statement = getConnection().prepareStatement(query);
+            statement.setString(1, username);
+            ResultSet resultSet = statement.executeQuery();
+            return new AuthUser(
+                    resultSet.getInt(1),
+                    resultSet.getString(2),
+                    resultSet.getString(3)
+            );
+        } catch (SQLException e) {
+            throw new DatabaseException(
+                    "Nie udało się wykonać tej operacji, proszę spróbować ponownie później",
+                    ErrorCode.DB_ERROR
+            );
+        }
+    }
+
     public User getUser(String username) throws DatabaseException {
         String query = "SELECT id, username, first_name, last_name FROM User WHERE UPPER(username) LIKE ?";
         try {
@@ -107,6 +128,11 @@ public class UserModel extends ModelInterface {
         }
     }
 
+    private void checkPasswordMatchesUser(AuthUser user, String passwordCandidate) throws AuthenticationError {
+        boolean passwordMatches = BCrypt.checkpw(passwordCandidate, user.password);
+        if (!passwordMatches) throw new AuthenticationError("Podano nieprawidłowe hasło");
+    }
+
     public void storeUser(String username, String password) throws DatabaseException, ValidationError {
         checkUsernameUniqueness(username);
         validatePassword(password);
@@ -124,6 +150,11 @@ public class UserModel extends ModelInterface {
                     ErrorCode.DB_ERROR
             );
         }
+    }
+
+    public User authenticateUser(AuthUser user, String passwordCandidate) throws DatabaseException, AuthenticationError {
+        checkPasswordMatchesUser(user, passwordCandidate);
+        return getUser(user.id);
     }
 }
 
