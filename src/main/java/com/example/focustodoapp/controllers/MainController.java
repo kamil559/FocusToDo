@@ -5,6 +5,7 @@ import com.example.focustodoapp.dtos.User;
 import com.example.focustodoapp.errors.AuthenticationError;
 import com.example.focustodoapp.errors.DatabaseException;
 import com.example.focustodoapp.errors.ValidationError;
+import com.example.focustodoapp.models.ProjectModel;
 import com.example.focustodoapp.models.UserModel;
 import javafx.animation.FadeTransition;
 import javafx.animation.PauseTransition;
@@ -32,29 +33,32 @@ public class MainController implements Initializable {
     private User user;
 
     @FXML
-    private ImageView drawerImage, loginWindowClose, loginWindowClose2, closeSuccessAlertButton, closeErrorAlertButton;
+    private ImageView drawerImage, loginWindowClose, loginWindowClose2, closeSuccessAlertButton, closeErrorAlertButton,
+            addProjectButton1;
 
     @FXML
-    private AnchorPane mainPane, opacityPane, drawerPane, loginOpacityPane, signInPane, signUpPane, successAlertPane,
+    private AnchorPane mainPane, opacityPane, drawerPane, mainOpacityPane, signInPane, signUpPane, successAlertPane,
             errorAlertPane;
 
     @FXML
-    private StackPane loginWindow;
+    private StackPane loginWindow, addProjectWindow;
 
     @FXML
     private Text successAlert, errorAlert;
 
     @FXML
-    private Button loginPageButton, signOutButton, signInSubmitButton, openSignUpPane, backToSignInPane, signUpSubmitButton;
+    private Button loginPageButton, signOutButton, signInSubmitButton, openSignUpPane, backToSignInPane,
+            signUpSubmitButton, addProjectButton2, submitAddProjectButton, hideAddProjectWindow;
 
     @FXML
-    private TextField usernameSignInInput, passwordSignInInput, usernameSignUpInput, passwordSignUpInput;
+    private TextField usernameSignInInput, passwordSignInInput, usernameSignUpInput, passwordSignUpInput,
+            newProjectName;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         opacityPaneState = false;
         drawerPaneState = false;
-        loginOpacityPane.setVisible(false);
+        mainOpacityPane.setVisible(false);
         loginWindow.setVisible(false);
         initOpacityPane();
 
@@ -76,6 +80,8 @@ public class MainController implements Initializable {
                 if (keyEvent.getCode() == KeyCode.ESCAPE) {
                     if (loginWindow.isVisible()) {
                         hideLoginWindow();
+                    } else if (addProjectWindow.isVisible()) {
+                        hideAddProjectWindow();
                     } else if (drawerPaneState) {
                         hideDrawer();
                         FadeTransition fadeTransition = hideOpacity(opacityPane);
@@ -88,20 +94,14 @@ public class MainController implements Initializable {
             }
         });
 
+        mainOpacityPane.setOnMouseClicked(event -> {
+            mainOpacityPaneClickHandler();
+        });
+
         setSignInEvents();
         setSignUpEvents();
-
-        closeSuccessAlertButton.setOnMouseClicked(event -> {
-            hideSuccessAlert();
-        });
-
-        closeErrorAlertButton.setOnMouseClicked(event -> {
-            hideErrorAlert();
-        });
-
-        signOutButton.setOnMouseClicked(event -> {
-            signOutHandler();
-        });
+        setAlertEvents();
+        setAddProjectEvents();
 
 //        ToDo:
 //         1) Wyświetla się okno logowania z wyborem:
@@ -112,6 +112,28 @@ public class MainController implements Initializable {
 //            - Dodaj projekt
 //            - Dodaj zadanie (do wyboru projekt)
 //         3) Możemy nawigować po różnych zakładkach (otwarte menu powinno przesuwać cały widok w prawą stronę)
+    }
+
+    private void submitAddProjectHandler() {
+        ProjectModel projectModel = new ProjectModel();
+        String projectName = newProjectName.getText();
+        List<String> errors = new ArrayList<>();
+        try {
+            if (user == null) {
+                projectModel.storeProject(projectName);
+            } else {
+                projectModel.storeProject(projectName, user.id);
+            }
+            showSuccessAlert("Pomyślnie dodano projekt", 5);
+            hideAddProjectWindow();
+        } catch (DatabaseException | ValidationError e) {
+            errors.add(e.getMessage());
+        } finally {
+            if (!errors.isEmpty()) {
+                String joinedErrors = String.join("\n", errors);
+                showErrorAlert(joinedErrors, 10);
+            }
+        }
     }
 
     private void signUpHandler() {
@@ -132,6 +154,40 @@ public class MainController implements Initializable {
                 showErrorAlert(joinedErrors, 10);
             }
         }
+    }
+
+    private void setAddProjectEvents() {
+        addProjectButton1.setOnMouseClicked(event -> {
+            showAddProjectWindow();
+        });
+        addProjectButton2.setOnMouseClicked(event -> {
+            showAddProjectWindow();
+        });
+        hideAddProjectWindow.setOnMouseClicked(event -> {
+            hideAddProjectWindow();
+        });
+        submitAddProjectButton.setOnMouseClicked(event -> {
+            submitAddProjectHandler();
+        });
+
+        newProjectName.setOnKeyPressed(new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent keyEvent) {
+                if (keyEvent.getCode() == KeyCode.ENTER) {
+                    submitAddProjectButton.requestFocus();
+                    submitAddProjectHandler();
+                }
+            }
+        });
+    }
+
+    private void setAlertEvents() {
+        closeSuccessAlertButton.setOnMouseClicked(event -> {
+            hideSuccessAlert();
+        });
+        closeErrorAlertButton.setOnMouseClicked(event -> {
+            hideErrorAlert();
+        });
     }
 
     private void setSignUpEvents() {
@@ -189,10 +245,6 @@ public class MainController implements Initializable {
     }
 
     private void setSignInEvents() {
-        loginOpacityPane.setOnMouseClicked(event -> {
-            loginOpacityPaneClickHandler();
-        });
-
         loginPageButton.setOnMouseClicked(event -> {
             showLoginWindow();
         });
@@ -207,6 +259,10 @@ public class MainController implements Initializable {
 
         signInSubmitButton.setOnMouseClicked(event -> {
             signInHandler();
+        });
+
+        signOutButton.setOnMouseClicked(event -> {
+            signOutHandler();
         });
 
         usernameSignInInput.setOnKeyPressed(new EventHandler<KeyEvent>() {
@@ -261,14 +317,13 @@ public class MainController implements Initializable {
                 showErrorAlert(joinedErrors, 10);
             }
         }
-
     }
 
     private void showLoginWindow() {
         signUpPane.setVisible(false);
         loginWindow.setVisible(true);
         signInPane.setVisible(true);
-        showOpacity(loginOpacityPane);
+        showOpacity(mainOpacityPane);
     }
 
     private void hideLoginWindow() {
@@ -281,7 +336,7 @@ public class MainController implements Initializable {
         passwordSignInInput.clear();
         usernameSignUpInput.clear();
         passwordSignUpInput.clear();
-        hideLoginOpacityPane();
+        hideMainOpacityPane();
     }
 
     private void initOpacityPane() {
@@ -329,15 +384,28 @@ public class MainController implements Initializable {
         }
     }
 
-    private void loginOpacityPaneClickHandler() {
+    private void mainOpacityPaneClickHandler() {
+//      todo: hide element depending on which window is currently open
         hideLoginWindow();
+        hideAddProjectWindow();
     }
 
-    private void hideLoginOpacityPane() {
-        FadeTransition fadeTransition = hideOpacity(loginOpacityPane, 0.01);
+    private void hideMainOpacityPane() {
+        FadeTransition fadeTransition = hideOpacity(mainOpacityPane, 0.01);
         fadeTransition.setOnFinished(event -> {
-            loginOpacityPane.setVisible(false);
+            mainOpacityPane.setVisible(false);
         });
+    }
+
+    public void showAddProjectWindow() {
+        showOpacity(mainOpacityPane);
+        addProjectWindow.setVisible(true);
+    }
+
+    public void hideAddProjectWindow() {
+        addProjectWindow.setVisible(false);
+        newProjectName.clear();
+        hideMainOpacityPane();
     }
 
     public void showDrawer() {

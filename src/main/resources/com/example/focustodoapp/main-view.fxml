@@ -104,11 +104,19 @@
                   </ImageView>
                </children>
             </VBox>
+            <ImageView fx:id="addProjectButton1" fitHeight="32.0" fitWidth="32.0" layoutX="6.0" layoutY="412.0" pickOnBounds="true" preserveRatio="true" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="6.0">
+               <image>
+                  <Image url="@../../../images/project-new.png" />
+               </image>
+               <cursor>
+                  <Cursor fx:constant="CLOSED_HAND" />
+               </cursor>
+            </ImageView>
          </children>
       </AnchorPane>
       <AnchorPane fx:id="opacityPane" prefHeight="500.0" prefWidth="600.0" style="-fx-background-color: #000; -fx-view-order: 4;" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-      <AnchorPane fx:id="loginOpacityPane" layoutX="10.0" layoutY="10.0" prefHeight="500.0" prefWidth="600.0" style="-fx-background-color: #000; -fx-view-order: 1;" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-      <StackPane fx:id="loginWindow" alignment="BASELINE_CENTER" layoutX="250.0" layoutY="74.0" maxHeight="380.0" maxWidth="300.0" minHeight="380.0" minWidth="300.0" prefHeight="380.0" prefWidth="300.0" AnchorPane.leftAnchor="250.0" AnchorPane.rightAnchor="250.0">
+      <AnchorPane fx:id="mainOpacityPane" layoutX="10.0" layoutY="10.0" prefHeight="500.0" prefWidth="600.0" style="-fx-background-color: #000; -fx-view-order: 1;" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+      <StackPane fx:id="loginWindow" alignment="BASELINE_CENTER" layoutX="250.0" layoutY="74.0" maxHeight="380.0" maxWidth="300.0" minHeight="380.0" minWidth="300.0" prefHeight="380.0" prefWidth="300.0" visible="false" AnchorPane.leftAnchor="250.0" AnchorPane.rightAnchor="250.0">
          <children>
             <AnchorPane fx:id="signInPane" maxHeight="380.0" maxWidth="300.0" minHeight="380.0" minWidth="300.0" prefHeight="380.0" prefWidth="300.0" style="-fx-background-color: #fff; -fx-view-order: 0; -fx-border-radius: 10px; -fx-background-radius: 10px;">
                <children>
@@ -136,7 +144,7 @@
                         <Font name="Ubuntu" size="24.0" />
                      </font>
                      <cursor>
-                        <Cursor fx:constant="CLOSED_HAND" />
+                        <Cursor fx:constant="DEFAULT" />
                      </cursor>
                   </Button>
                   <ImageView fx:id="loginWindowClose" fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
@@ -175,7 +183,7 @@
                         <Font name="Ubuntu" size="24.0" />
                      </font>
                      <cursor>
-                        <Cursor fx:constant="CLOSED_HAND" />
+                        <Cursor fx:constant="DEFAULT" />
                      </cursor>
                   </Button>
                   <ImageView fx:id="loginWindowClose2" fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
@@ -236,6 +244,14 @@
                   </Button>
                </children>
             </VBox>
+            <Button fx:id="addProjectButton2" alignment="BASELINE_LEFT" mnemonicParsing="false" prefHeight="32.0" prefWidth="179.0" style="-fx-background-color: #ffffff;" styleClass="menuItem" text="Dodaj projekt" textFill="#fe5c44" AnchorPane.bottomAnchor="10.0">
+               <font>
+                  <Font name="Ubuntu" size="16.0" />
+               </font>
+               <cursor>
+                  <Cursor fx:constant="CLOSED_HAND" />
+               </cursor>
+            </Button>
          </children>
       </AnchorPane>
       <AnchorPane fx:id="successAlertPane" maxHeight="80.0" maxWidth="700.0" opacity="0.75" prefHeight="40.0" prefWidth="700.0" style="-fx-background-color: #d4edda; -fx-border-color: #c3e6cb; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-view-order: 0;" visible="false" AnchorPane.bottomAnchor="20.0" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0">
@@ -272,5 +288,38 @@
             </Text>
          </children>
       </AnchorPane>
+      <StackPane fx:id="addProjectWindow" alignment="BASELINE_CENTER" layoutX="250.0" layoutY="140.0" maxHeight="150.0" maxWidth="300.0" minHeight="150.0" minWidth="300.0" prefHeight="150.0" prefWidth="301.0" visible="false" AnchorPane.leftAnchor="250.0" AnchorPane.rightAnchor="250.0">
+         <children>
+            <AnchorPane maxHeight="150.0" maxWidth="300.0" minHeight="150.0" minWidth="300.0" prefHeight="150.0" prefWidth="300.0" style="-fx-background-color: #fff; -fx-view-order: 0; -fx-border-radius: 10px; -fx-background-radius: 10px;">
+               <children>
+                  <TextField fx:id="newProjectName" alignment="BASELINE_LEFT" layoutX="18.0" layoutY="50.0" prefHeight="32.0" prefWidth="266.0" promptText="Nazwa nowego projektu" style="-fx-padding: 10px;" AnchorPane.leftAnchor="18.0" AnchorPane.rightAnchor="16.0" AnchorPane.topAnchor="50.0" />
+                  <Button fx:id="submitAddProjectButton" layoutX="196.0" layoutY="112.0" maxHeight="26.0" maxWidth="88.0" minHeight="26.0" minWidth="88.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="88.0" style="-fx-background-color: #fe5c44;" text="Potwierdź" textFill="WHITE">
+                     <font>
+                        <Font name="Ubuntu" size="14.0" />
+                     </font>
+                     <cursor>
+                        <Cursor fx:constant="CLOSED_HAND" />
+                     </cursor>
+                  </Button>
+                  <Button layoutX="65.0" layoutY="7.0" mnemonicParsing="false" prefHeight="32.0" prefWidth="171.0" style="-fx-background-color: transparent; -fx-border-color: transparent;" text="Dodaj projekt" AnchorPane.leftAnchor="65.0" AnchorPane.rightAnchor="65.0" AnchorPane.topAnchor="7.0">
+                     <font>
+                        <Font name="Ubuntu" size="16.0" />
+                     </font>
+                     <cursor>
+                        <Cursor fx:constant="DEFAULT" />
+                     </cursor>
+                  </Button>
+                  <Button fx:id="hideAddProjectWindow" layoutX="102.0" layoutY="112.0" maxHeight="26.0" maxWidth="88.0" minHeight="26.0" minWidth="88.0" mnemonicParsing="false" prefHeight="24.0" prefWidth="88.0" style="-fx-background-color: #ffffff; -fx-border-color: #a9a9a9; -fx-border-radius: 2px;" text="Anuluj">
+                     <font>
+                        <Font name="Ubuntu" size="14.0" />
+                     </font>
+                     <cursor>
+                        <Cursor fx:constant="CLOSED_HAND" />
+                     </cursor>
+                  </Button>
+               </children>
+            </AnchorPane>
+         </children>
+      </StackPane>
    </children>
 </AnchorPane>

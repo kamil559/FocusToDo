@@ -11,6 +11,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import org.mindrot.jbcrypt.BCrypt;
@@ -57,12 +58,14 @@ public class UserModel extends ModelInterface {
             PreparedStatement statement = getConnection().prepareStatement(query);
             statement.setString(1, userId.toString());
             ResultSet resultSet = statement.executeQuery();
-            return new User(
-                resultSet.getInt(1),
-                resultSet.getString(2),
-                resultSet.getString(3),
-                resultSet.getString(4)
+            User user = new User(
+                    resultSet.getInt(1),
+                    resultSet.getString(2),
+                    resultSet.getString(3),
+                    resultSet.getString(4)
             );
+            closeConnection();
+            return user;
         } catch (SQLException e) {
             throw new DatabaseException(
                     "Nie udało się wykonać tej operacji, proszę spróbować ponownie później",
@@ -77,11 +80,13 @@ public class UserModel extends ModelInterface {
             PreparedStatement statement = getConnection().prepareStatement(query);
             statement.setString(1, username);
             ResultSet resultSet = statement.executeQuery();
-            return new AuthUser(
+            AuthUser authUser = new AuthUser(
                     resultSet.getInt(1),
                     resultSet.getString(2),
                     resultSet.getString(3)
             );
+            closeConnection();
+            return authUser;
         } catch (SQLException e) {
             throw new DatabaseException(
                     "Nie udało się wykonać tej operacji, proszę spróbować ponownie później",
@@ -96,12 +101,14 @@ public class UserModel extends ModelInterface {
             PreparedStatement statement = getConnection().prepareStatement(query);
             statement.setString(1, username);
             ResultSet resultSet = statement.executeQuery();
-            return new User(
+            User user = new User(
                     resultSet.getInt(1),
                     resultSet.getString(2),
                     resultSet.getString(3),
                     resultSet.getString(4)
             );
+            closeConnection();
+            return user;
         } catch (SQLException e) {
             throw new DatabaseException(
                     "Nie udało się wykonać tej operacji, proszę spróbować ponownie później",
@@ -133,7 +140,17 @@ public class UserModel extends ModelInterface {
         if (!passwordMatches) throw new AuthenticationError("Podano nieprawidłowe hasło");
     }
 
+    private void checkUsernameRequired(String username) throws ValidationError {
+        if (Objects.equals(username, "")) throw new ValidationError("Login jest wymagany");
+    }
+
+    private void checkPasswordRequired(String password) throws ValidationError {
+        if (Objects.equals(password, "")) throw new ValidationError("Hasło jest wymagane");
+    }
+
     public void storeUser(String username, String password) throws DatabaseException, ValidationError {
+        checkUsernameRequired(username);
+        checkPasswordRequired(password);
         checkUsernameUniqueness(username);
         validatePassword(password);
         String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt(5));
