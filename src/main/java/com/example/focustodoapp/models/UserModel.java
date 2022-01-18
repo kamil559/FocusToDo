@@ -169,7 +169,11 @@ public class UserModel extends ModelInterface {
         }
     }
 
-    public User authenticateUser(AuthUser user, String passwordCandidate) throws DatabaseException, AuthenticationError {
+    public User authenticateUser(String username, String passwordCandidate)
+            throws DatabaseException, AuthenticationError, ValidationError {
+        checkUsernameRequired(username);
+        checkPasswordRequired(passwordCandidate);
+        AuthUser user = getAuthUser(username);
         checkPasswordMatchesUser(user, passwordCandidate);
         return getUser(user.id);
     }

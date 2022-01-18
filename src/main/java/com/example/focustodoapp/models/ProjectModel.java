@@ -1,11 +1,15 @@
 package com.example.focustodoapp.models;
 
 import com.example.focustodoapp.constants.ErrorCode;
+import com.example.focustodoapp.dtos.Project;
 import com.example.focustodoapp.errors.DatabaseException;
 import com.example.focustodoapp.errors.ValidationError;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class ProjectModel extends ModelInterface {
@@ -41,6 +45,59 @@ public class ProjectModel extends ModelInterface {
         } catch (SQLException e) {
             throw new DatabaseException(
                     "Nie udało się utworzyć nowego projektu, proszę spróbować ponownie",
+                    ErrorCode.DB_ERROR
+            );
+        }
+    }
+
+    public List<Project> getProjects() throws DatabaseException {
+        String query = "SELECT id, name, user, created_at FROM Project WHERE user IS NULL ORDER BY created_at DESC";
+        List<Project> projects = new ArrayList<>();
+        try {
+            PreparedStatement statement = getConnection().prepareStatement(query);
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                projects.add(
+                    new Project(
+                        resultSet.getInt(1),
+                        resultSet.getString(2),
+                        resultSet.getInt(3),
+                        resultSet.getString(4)
+                    )
+                );
+            }
+            closeConnection();
+            return projects;
+        } catch (SQLException e) {
+            throw new DatabaseException(
+                    "Nie udało się wykonać tej operacji, proszę spróbować ponownie później",
+                    ErrorCode.DB_ERROR
+            );
+        }
+    }
+
+    public List<Project> getProjects(Integer userId) throws DatabaseException {
+        String query = "SELECT id, name, user, created_at FROM Project WHERE user = ? ORDER BY created_at DESC";
+        List<Project> projects = new ArrayList<>();
+        try {
+            PreparedStatement statement = getConnection().prepareStatement(query);
+            statement.setInt(1, userId);
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                projects.add(
+                        new Project(
+                                resultSet.getInt(1),
+                                resultSet.getString(2),
+                                resultSet.getInt(3),
+                                resultSet.getString(4)
+                        )
+                );
+            }
+            closeConnection();
+            return projects;
+        } catch (SQLException e) {
+            throw new DatabaseException(
+                    "Nie udało się wykonać tej operacji, proszę spróbować ponownie później",
                     ErrorCode.DB_ERROR
             );
         }

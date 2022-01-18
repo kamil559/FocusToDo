@@ -1,20 +1,24 @@
 package com.example.focustodoapp.controllers;
 
-import com.example.focustodoapp.dtos.AuthUser;
+import com.example.focustodoapp.dtos.Project;
 import com.example.focustodoapp.dtos.User;
 import com.example.focustodoapp.errors.AuthenticationError;
 import com.example.focustodoapp.errors.DatabaseException;
 import com.example.focustodoapp.errors.ValidationError;
 import com.example.focustodoapp.models.ProjectModel;
+import com.example.focustodoapp.models.TaskModel;
 import com.example.focustodoapp.models.UserModel;
 import javafx.animation.FadeTransition;
 import javafx.animation.PauseTransition;
 import javafx.animation.TranslateTransition;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -23,6 +27,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
+import javafx.util.StringConverter;
 
 import java.net.URL;
 import java.util.*;
@@ -34,7 +39,7 @@ public class MainController implements Initializable {
 
     @FXML
     private ImageView drawerImage, loginWindowClose, loginWindowClose2, closeSuccessAlertButton, closeErrorAlertButton,
-            addProjectButton1;
+            addProjectButton1, submitAddTaskButton;
 
     @FXML
     private AnchorPane mainPane, opacityPane, drawerPane, mainOpacityPane, signInPane, signUpPane, successAlertPane,
@@ -52,7 +57,10 @@ public class MainController implements Initializable {
 
     @FXML
     private TextField usernameSignInInput, passwordSignInInput, usernameSignUpInput, passwordSignUpInput,
-            newProjectName;
+            newProjectName, newTaskName;
+
+    @FXML
+    private ComboBox<Project> newTaskSelectProject;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -102,6 +110,7 @@ public class MainController implements Initializable {
         setSignUpEvents();
         setAlertEvents();
         setAddProjectEvents();
+        setAddTaskEvents();
 
 //        ToDo:
 //         1) Wyświetla się okno logowania z wyborem:
@@ -112,6 +121,62 @@ public class MainController implements Initializable {
 //            - Dodaj projekt
 //            - Dodaj zadanie (do wyboru projekt)
 //         3) Możemy nawigować po różnych zakładkach (otwarte menu powinno przesuwać cały widok w prawą stronę)
+    }
+
+    private void setAddTaskEvents() {
+        fillProjectComboBoxOptions();
+        submitAddTaskButton.setOnMouseClicked(event -> {
+            submitAddTaskHandler();
+        });
+
+        newTaskName.setOnKeyPressed(new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent keyEvent) {
+                if (keyEvent.getCode() == KeyCode.ENTER) {
+                    submitAddProjectButton.requestFocus();
+                    submitAddTaskHandler();
+                } else if (keyEvent.getCode() == KeyCode.ESCAPE) {
+                    newTaskName.clear();
+                }
+            }
+        });
+    }
+
+    public void fillProjectComboBoxOptions() {
+        ObservableList<Project> projectOptions = FXCollections.observableArrayList();
+        List<Project> projects;
+        ProjectModel projectModel = new ProjectModel();
+        List<String> errors = new ArrayList<>();
+
+        try {
+            if (user == null) {
+                projects = projectModel.getProjects();
+            } else {
+                projects = projectModel.getProjects(user.id);
+            }
+            projectOptions.addAll(projects);
+            newTaskSelectProject.setItems(projectOptions);
+
+        } catch (DatabaseException e) {
+            errors.add(e.getMessage());
+        } finally {
+            if (!errors.isEmpty()) {
+                String joinedErrors = String.join("\n", errors);
+                showErrorAlert(joinedErrors, 10);
+            }
+        }
+        newTaskSelectProject.setConverter(new StringConverter<Project>() {
+            @Override
+            public String toString(Project object) {
+                return object.getName();
+            }
+
+            @Override
+            public Project fromString(String string) {
+                return newTaskSelectProject.getItems().stream().filter(project ->
+                        project.getName().equals(string)).findFirst().orElse(null);
+            }
+        });
     }
 
     private void submitAddProjectHandler() {
@@ -126,6 +191,27 @@ public class MainController implements Initializable {
             }
             showSuccessAlert("Pomyślnie dodano projekt", 5);
             hideAddProjectWindow();
+        } catch (DatabaseException | ValidationError e) {
+            errors.add(e.getMessage());
+        } finally {
+            if (!errors.isEmpty()) {
+                String joinedErrors = String.join("\n", errors);
+                showErrorAlert(joinedErrors, 10);
+            }
+        }
+    }
+
+    public void submitAddTaskHandler() {
+        TaskModel taskModel = new TaskModel();
+        String taskName = newTaskName.getText();
+        Project selectedProject = newTaskSelectProject.getSelectionModel().getSelectedItem();
+        List<String> errors = new ArrayList<>();
+        try {
+            taskModel.storeTask(taskName, selectedProject);
+            showSuccessAlert("Pomyślnie dodano zadanie", 5);
+            hideAddProjectWindow();
+            newTaskName.clear();
+//            todo: refresh task list
         } catch (DatabaseException | ValidationError e) {
             errors.add(e.getMessage());
         } finally {
@@ -291,6 +377,7 @@ public class MainController implements Initializable {
         clearLoginWindowData();
         signOutButton.setVisible(false);
         loginPageButton.setVisible(true);
+        fillProjectComboBoxOptions();
         showSuccessAlert("Wylogowano pomyślnie", 5);
     }
 
@@ -302,14 +389,14 @@ public class MainController implements Initializable {
         List<String> errors = new ArrayList<>();
 
         try {
-            AuthUser authUser = userModel.getAuthUser(username);
-            User user = userModel.authenticateUser(authUser, password);
-            showSuccessAlert("Zalogowano pomyślnie", 5);
+            User user = userModel.authenticateUser(username, password);
             this.user = user;
             hideLoginWindow();
             loginPageButton.setVisible(false);
             signOutButton.setVisible(true);
-        } catch (DatabaseException | AuthenticationError e) {
+            fillProjectComboBoxOptions();
+            showSuccessAlert("Zalogowano pomyślnie", 5);
+        } catch (DatabaseException | AuthenticationError | ValidationError e) {
             errors.add(e.getMessage());
         } finally {
             if (!errors.isEmpty()) {
@@ -323,6 +410,7 @@ public class MainController implements Initializable {
         signUpPane.setVisible(false);
         loginWindow.setVisible(true);
         signInPane.setVisible(true);
+        usernameSignInInput.requestFocus();
         showOpacity(mainOpacityPane);
     }
 
