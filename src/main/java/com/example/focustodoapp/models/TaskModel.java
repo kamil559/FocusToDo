@@ -15,7 +15,7 @@ public class TaskModel extends ModelInterface {
     }
 
     private void checkProjectRequired(Project project) throws ValidationError {
-        if (project == null) throw new ValidationError("Wymagane jest wybranie projektu");
+        if (project == null || project.getId() == -1) throw new ValidationError("Wymagane jest wybranie projektu");
     }
 
     public void storeTask(String taskName, Project project) throws ValidationError, DatabaseException {

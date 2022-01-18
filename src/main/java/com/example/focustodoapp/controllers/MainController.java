@@ -19,6 +19,7 @@ import javafx.fxml.Initializable;
 
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -133,10 +134,39 @@ public class MainController implements Initializable {
             @Override
             public void handle(KeyEvent keyEvent) {
                 if (keyEvent.getCode() == KeyCode.ENTER) {
+                    submitAddTaskHandler();
+                } else if (keyEvent.getCode() == KeyCode.ESCAPE) {
+                    newTaskName.clear();
+                    clearProjectSelectComboBox();
+                }
+            }
+        });
+
+        newTaskSelectProject.setOnKeyPressed(new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent keyEvent) {
+                if (keyEvent.getCode() == KeyCode.ENTER) {
                     submitAddProjectButton.requestFocus();
                     submitAddTaskHandler();
                 } else if (keyEvent.getCode() == KeyCode.ESCAPE) {
                     newTaskName.clear();
+                    clearProjectSelectComboBox();
+                }
+            }
+        });
+    }
+
+    public void clearProjectSelectComboBox() {
+        newTaskSelectProject.setValue(null);
+        newTaskSelectProject.setPromptText("Wybierz projekt");
+        newTaskSelectProject.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(Project item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    this.setText("Wybierz projekt");
+                } else {
+                    this.setText(item.getName());
                 }
             }
         });
@@ -156,7 +186,7 @@ public class MainController implements Initializable {
             }
             projectOptions.addAll(projects);
             newTaskSelectProject.setItems(projectOptions);
-
+            clearProjectSelectComboBox();
         } catch (DatabaseException e) {
             errors.add(e.getMessage());
         } finally {
@@ -190,6 +220,7 @@ public class MainController implements Initializable {
                 projectModel.storeProject(projectName, user.id);
             }
             showSuccessAlert("Pomyślnie dodano projekt", 5);
+            fillProjectComboBoxOptions();
             hideAddProjectWindow();
         } catch (DatabaseException | ValidationError e) {
             errors.add(e.getMessage());
@@ -211,6 +242,7 @@ public class MainController implements Initializable {
             showSuccessAlert("Pomyślnie dodano zadanie", 5);
             hideAddProjectWindow();
             newTaskName.clear();
+            clearProjectSelectComboBox();
 //            todo: refresh task list
         } catch (DatabaseException | ValidationError e) {
             errors.add(e.getMessage());
@@ -488,6 +520,7 @@ public class MainController implements Initializable {
     public void showAddProjectWindow() {
         showOpacity(mainOpacityPane);
         addProjectWindow.setVisible(true);
+        newProjectName.requestFocus();
     }
 
     public void hideAddProjectWindow() {
