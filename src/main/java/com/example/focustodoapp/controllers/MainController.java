@@ -1,6 +1,8 @@
 package com.example.focustodoapp.controllers;
 
+import com.example.focustodoapp.TaskElement;
 import com.example.focustodoapp.dtos.Project;
+import com.example.focustodoapp.dtos.Task;
 import com.example.focustodoapp.dtos.User;
 import com.example.focustodoapp.errors.AuthenticationError;
 import com.example.focustodoapp.errors.DatabaseException;
@@ -17,15 +19,15 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
@@ -63,6 +65,9 @@ public class MainController implements Initializable {
     @FXML
     private ComboBox<Project> newTaskSelectProject;
 
+    @FXML
+    private VBox taskListVbox;
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         opacityPaneState = false;
@@ -71,7 +76,7 @@ public class MainController implements Initializable {
         loginWindow.setVisible(false);
         initOpacityPane();
 
-        TranslateTransition translateTransition =  new TranslateTransition(Duration.seconds(0.3), drawerPane);
+        TranslateTransition translateTransition = new TranslateTransition(Duration.seconds(0.3), drawerPane);
         translateTransition.setByX(-600);
         translateTransition.play();
 
@@ -112,20 +117,11 @@ public class MainController implements Initializable {
         setAlertEvents();
         setAddProjectEvents();
         setAddTaskEvents();
-
-//        ToDo:
-//         1) Wyświetla się okno logowania z wyborem:
-//            - zarejestruj
-//            - kontynuuj bez logowania (dane będą trzymane w pamięci i po zamknięciu aplikacji zostaną utracone)
-//            - zarejestrowaniu możemy od razu się zalogować
-//         2) Po zalogowaniu pojawia się ekran główny, w którym mamy przyciski:
-//            - Dodaj projekt
-//            - Dodaj zadanie (do wyboru projekt)
-//         3) Możemy nawigować po różnych zakładkach (otwarte menu powinno przesuwać cały widok w prawą stronę)
     }
 
     private void setAddTaskEvents() {
         fillProjectComboBoxOptions();
+        Tooltip.install(submitAddTaskButton, new Tooltip("Kliknij, aby dodać nowe zadanie"));
         submitAddTaskButton.setOnMouseClicked(event -> {
             submitAddTaskHandler();
         });
@@ -154,6 +150,9 @@ public class MainController implements Initializable {
                 }
             }
         });
+
+
+        fillTaskElements();
     }
 
     public void clearProjectSelectComboBox() {
@@ -170,6 +169,73 @@ public class MainController implements Initializable {
                 }
             }
         });
+    }
+
+    public void fillTaskElements() {
+        List<Task> tasks;
+        TaskModel taskModel = new TaskModel();
+        Project selectedProject = newTaskSelectProject.getSelectionModel().getSelectedItem();
+        List<String> errors = new ArrayList<>();
+        try {
+            Integer userId = user != null ? user.id : -1;
+            Integer projectId = selectedProject != null ? selectedProject.getId() : -1;
+            tasks = taskModel.getTasks(userId, projectId);
+            doFillTasks(tasks);
+        } catch (DatabaseException e) {
+            errors.add(e.getMessage());
+        } finally {
+            if (!errors.isEmpty()) {
+                String joinedErrors = String.join("\n", errors);
+                showErrorAlert(joinedErrors, 10);
+            }
+        }
+    }
+
+    private void doFillTasks(List<Task> tasks) {
+        List<TaskElement> taskElements = new ArrayList<>();
+
+        for (Task task : tasks) {
+            TaskElement taskElement = new TaskElement(
+                    task.getId(),
+                    task.getName(),
+                    task.getDone(),
+                    task.getDueDate(),
+                    task.getProject(),
+                    task.getNote(),
+                    task.getCreatedAt()
+            );
+            taskElement.setId("taskElement" + task.getId());
+            ImageView finishTask = (ImageView) taskElement.lookup("#finishTask");
+            Label taskElementName = (Label) taskElement.lookup("#taskElementName");
+            finishTask.setId("finishTask" + task.getId());
+            taskElementName.setId("taskElementName" + task.getId());
+            taskElementName.setText(task.getName());
+
+            taskElements.add(taskElement);
+
+            finishTask.setOnMouseClicked(new EventHandler<MouseEvent>() {
+                @Override
+                public void handle(MouseEvent mouseEvent) {
+                    ImageView source = ((ImageView)mouseEvent.getSource());
+                    TaskElement taskElement = ((TaskElement)((ImageView)mouseEvent.getSource()).getParent());
+                    Integer taskId = taskElement.taskId;
+                    String newImageSource;
+                    if (taskElement.done) {
+                        newImageSource = String.valueOf(getClass().getResource("/images/task_to_do.png"));
+                    } else {
+                        newImageSource = String.valueOf(getClass().getResource("/images/task_done.png"));
+                    }
+                    source.setImage(new Image(newImageSource));
+                    taskElement.done = !taskElement.done;
+
+//                    todo: finish or unfinish task
+                    System.out.println(taskId);
+                }
+            });
+
+            taskListVbox.getChildren().clear();
+            taskListVbox.getChildren().addAll(taskElements);
+        }
     }
 
     public void fillProjectComboBoxOptions() {
@@ -243,7 +309,7 @@ public class MainController implements Initializable {
             hideAddProjectWindow();
             newTaskName.clear();
             clearProjectSelectComboBox();
-//            todo: refresh task list
+            fillTaskElements();
         } catch (DatabaseException | ValidationError e) {
             errors.add(e.getMessage());
         } finally {
@@ -275,6 +341,7 @@ public class MainController implements Initializable {
     }
 
     private void setAddProjectEvents() {
+        Tooltip.install(addProjectButton1, new Tooltip("Kliknij, aby dodać nowy projekt"));
         addProjectButton1.setOnMouseClicked(event -> {
             showAddProjectWindow();
         });
@@ -540,7 +607,7 @@ public class MainController implements Initializable {
     }
 
     public void hideDrawer() {
-        TranslateTransition translateTransition =  new TranslateTransition(Duration.seconds(0.3), drawerPane);
+        TranslateTransition translateTransition = new TranslateTransition(Duration.seconds(0.3), drawerPane);
         translateTransition.setByX(-600);
         translateTransition.play();
 
@@ -588,7 +655,9 @@ public class MainController implements Initializable {
         doShowAlert(successAlertPane, successAlert, message, duration);
     }
 
-    private void hideSuccessAlert() { doHideAlert(successAlertPane, successAlert); }
+    private void hideSuccessAlert() {
+        doHideAlert(successAlertPane, successAlert);
+    }
 
     private void showErrorAlert(String message) {
         hideSuccessAlert();
@@ -600,7 +669,9 @@ public class MainController implements Initializable {
         doShowAlert(errorAlertPane, errorAlert, message, duration);
     }
 
-    private void hideErrorAlert() { doHideAlert(errorAlertPane, errorAlert); }
+    private void hideErrorAlert() {
+        doHideAlert(errorAlertPane, errorAlert);
+    }
 
     private void doShowAlert(AnchorPane alertPane, Text alertTextBox, String message, double duration) {
         FadeTransition fadeTransition = new FadeTransition(Duration.seconds(0.1), alertPane);

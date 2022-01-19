@@ -199,7 +199,7 @@
             </AnchorPane>
          </children>
       </StackPane>
-      <AnchorPane fx:id="drawerPane" layoutX="44.0" layoutY="45.0" prefHeight="500.0" prefWidth="160.0" style="-fx-background-color: #ffffff; -fx-view-order: 3; -fx-border-width: 0 1px 0 0; -fx-border-color: #a9a9a9;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="44.0" AnchorPane.topAnchor="46.0">
+      <AnchorPane fx:id="drawerPane" layoutX="44.0" layoutY="45.0" prefHeight="500.0" prefWidth="160.0" style="-fx-background-color: #ffffff; -fx-view-order: 3; -fx-border-width: 0 1px 0 0; -fx-border-color: #a9a9a9;" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="44.0" AnchorPane.topAnchor="46.0">
          <children>
             <VBox prefHeight="200.0" prefWidth="100.0" spacing="20.0" style="-fx-background-color: #ffffff;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="20.0">
                <children>
@@ -345,7 +345,7 @@
                      </cursor></ComboBox>
                </children>
             </AnchorPane>
-            <Button alignment="BASELINE_CENTER" layoutX="319.0" layoutY="5.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="124.0" style="-fx-background-color: transparent; -fx-border-color: transparent;" text="Zadania">
+            <Button alignment="BASELINE_CENTER" layoutX="319.0" layoutY="5.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="124.0" style="-fx-background-color: transparent; -fx-border-color: transparent;" text="Zadania" AnchorPane.leftAnchor="319.0" AnchorPane.rightAnchor="317.0" AnchorPane.topAnchor="5.0">
                <font>
                   <Font name="Ubuntu Bold" size="18.0" />
                </font>
@@ -353,6 +353,11 @@
                   <Cursor fx:constant="DEFAULT" />
                </cursor>
             </Button>
+            <AnchorPane layoutX="23.0" layoutY="101.0" prefHeight="335.0" prefWidth="716.0" style="-fx-border-radius: 5px; -fx-background-radius: 5px;">
+               <children>
+                  <VBox fx:id="taskListVbox" prefHeight="200.0" prefWidth="100.0" spacing="10.0" />
+               </children>
+            </AnchorPane>
          </children>
       </AnchorPane>
    </children>

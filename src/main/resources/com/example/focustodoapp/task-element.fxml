@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.Cursor?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<fx:root maxHeight="40.0" maxWidth="715.0" minHeight="40.0" minWidth="715.0" prefHeight="40.0" prefWidth="715.0" style="-fx-background-color: #fff; -fx-border-radius: 5px; -fx-background-radius: 5px;" type="javafx.scene.layout.AnchorPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+    <Label fx:id="taskElementName" layoutX="52.0" layoutY="11.0" prefHeight="16.0" prefWidth="648.0" textFill="DARKGRAY">
+        <font>
+            <Font name="Ubuntu" size="15.0" />
+        </font>
+    </Label>
+    <ImageView fx:id="finishTask" fitHeight="24.0" fitWidth="26.0" layoutX="9.0" layoutY="8.0" pickOnBounds="true" preserveRatio="true" style="-fx-view-order: 1;" AnchorPane.bottomAnchor="8.0" AnchorPane.leftAnchor="9.0" AnchorPane.rightAnchor="681.0" AnchorPane.topAnchor="8.0">
+        <cursor>
+            <Cursor fx:constant="CLOSED_HAND" />
+        </cursor>
+        <Image url="@../../../images/task_to_do.png" />
+    </ImageView>
+</fx:root>
