@@ -13,6 +13,8 @@ import com.example.focustodoapp.models.UserModel;
 import javafx.animation.FadeTransition;
 import javafx.animation.PauseTransition;
 import javafx.animation.TranslateTransition;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
@@ -126,6 +128,13 @@ public class MainController implements Initializable {
             submitAddTaskHandler();
         });
 
+        newTaskSelectProject.valueProperty().addListener(new ChangeListener<Project>() {
+            @Override
+            public void changed(ObservableValue<? extends Project> observableValue, Project project, Project t1) {
+                fillTaskElements();
+            }
+        });
+
         newTaskName.setOnKeyPressed(new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent keyEvent) {
@@ -193,7 +202,6 @@ public class MainController implements Initializable {
 
     private void doFillTasks(List<Task> tasks) {
         List<TaskElement> taskElements = new ArrayList<>();
-
         for (Task task : tasks) {
             TaskElement taskElement = new TaskElement(
                     task.getId(),
@@ -210,15 +218,21 @@ public class MainController implements Initializable {
             finishTask.setId("finishTask" + task.getId());
             taskElementName.setId("taskElementName" + task.getId());
             taskElementName.setText(task.getName());
-
             taskElements.add(taskElement);
+
+            String newImageSource;
+            if (taskElement.done) {
+                newImageSource = String.valueOf(getClass().getResource("/images/task_done.png"));
+            } else {
+                newImageSource = String.valueOf(getClass().getResource("/images/task_to_do.png"));
+            }
+            finishTask.setImage(new Image(newImageSource));
 
             finishTask.setOnMouseClicked(new EventHandler<MouseEvent>() {
                 @Override
                 public void handle(MouseEvent mouseEvent) {
                     ImageView source = ((ImageView)mouseEvent.getSource());
                     TaskElement taskElement = ((TaskElement)((ImageView)mouseEvent.getSource()).getParent());
-                    Integer taskId = taskElement.taskId;
                     String newImageSource;
                     if (taskElement.done) {
                         newImageSource = String.valueOf(getClass().getResource("/images/task_to_do.png"));
@@ -227,15 +241,12 @@ public class MainController implements Initializable {
                     }
                     source.setImage(new Image(newImageSource));
                     taskElement.done = !taskElement.done;
-
-//                    todo: finish or unfinish task
-                    System.out.println(taskId);
+                    updateTaskDone(taskElement.taskId, taskElement.done);
                 }
             });
-
-            taskListVbox.getChildren().clear();
-            taskListVbox.getChildren().addAll(taskElements);
         }
+        taskListVbox.getChildren().clear();
+        if (taskElements.size() > 0) taskListVbox.getChildren().addAll(taskElements);
     }
 
     public void fillProjectComboBoxOptions() {
@@ -243,7 +254,6 @@ public class MainController implements Initializable {
         List<Project> projects;
         ProjectModel projectModel = new ProjectModel();
         List<String> errors = new ArrayList<>();
-
         try {
             if (user == null) {
                 projects = projectModel.getProjects();
@@ -273,6 +283,24 @@ public class MainController implements Initializable {
                         project.getName().equals(string)).findFirst().orElse(null);
             }
         });
+    }
+
+    private void updateTaskDone(Integer taskId, Boolean newDoneValue) {
+        TaskModel taskModel = new TaskModel();
+        List<String> errors = new ArrayList<>();
+        try {
+            Integer done = newDoneValue ? 1 : 0;
+            taskModel.updateDone(taskId, done);
+            showSuccessAlert("Pomyślnie zaktualizowano zadanie", 5);
+            fillTaskElements();
+        } catch (DatabaseException | ValidationError e) {
+            errors.add(e.getMessage());
+        } finally {
+            if (!errors.isEmpty()) {
+                String joinedErrors = String.join("\n", errors);
+                showErrorAlert(joinedErrors, 10);
+            }
+        }
     }
 
     private void submitAddProjectHandler() {

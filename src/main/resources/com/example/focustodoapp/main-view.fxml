@@ -199,7 +199,7 @@
             </AnchorPane>
          </children>
       </StackPane>
-      <AnchorPane fx:id="drawerPane" layoutX="44.0" layoutY="45.0" prefHeight="500.0" prefWidth="160.0" style="-fx-background-color: #ffffff; -fx-view-order: 3; -fx-border-width: 0 1px 0 0; -fx-border-color: #a9a9a9;" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="44.0" AnchorPane.topAnchor="46.0">
+      <AnchorPane fx:id="drawerPane" layoutX="44.0" layoutY="45.0" prefHeight="500.0" prefWidth="160.0" style="-fx-background-color: #ffffff; -fx-view-order: 3; -fx-border-width: 0 1px 0 0; -fx-border-color: #a9a9a9;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="44.0" AnchorPane.topAnchor="46.0">
          <children>
             <VBox prefHeight="200.0" prefWidth="100.0" spacing="20.0" style="-fx-background-color: #ffffff;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="20.0">
                <children>

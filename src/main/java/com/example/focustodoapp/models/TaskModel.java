@@ -44,23 +44,21 @@ public class TaskModel extends ModelInterface {
     public List<Task> getTasks(Integer userId, Integer projectId) throws DatabaseException {
         try {
             String query;
-
             if (userId != -1) {
                 query = "SELECT * FROM Task JOIN Project p on p.id = Task.project WHERE p.user = ?";
             } else {
                 query = "SELECT * FROM Task JOIN Project p on p.id = Task.project WHERE p.user is NULL";
             }
-
             if (projectId != -1) query = query + " AND p.id = ?";
-
             query = query + " ORDER BY created_at DESC";
-
             PreparedStatement statement = getConnection().prepareStatement(query);
 
             if (userId != -1) {
                 statement.setInt(1, userId);
+                if (projectId != -1) statement.setInt(2, projectId);
+            } else {
+                if (projectId != -1) statement.setInt(1, projectId);
             }
-            if (projectId != -1) statement.setInt(2, projectId);
 
             List<Task> tasks = new ArrayList<>();
             ResultSet resultSet = statement.executeQuery();
@@ -82,6 +80,27 @@ public class TaskModel extends ModelInterface {
         } catch (SQLException e) {
             throw new DatabaseException(
                     "Nie udało się pobrać zadań, proszę spróbować ponownie później",
+                    ErrorCode.DB_ERROR
+            );
+        }
+    }
+
+    private void validateDoneValue(Integer newDoneValue) throws ValidationError {
+        if (newDoneValue != 0 && newDoneValue != 1) throw new ValidationError("Nazwa zadania jest wymagana");
+    }
+
+    public void updateDone(Integer taskId, Integer newDoneValue) throws ValidationError, DatabaseException {
+        validateDoneValue(newDoneValue);
+        String query = "UPDATE Task SET done = ? WHERE id = ?";
+        try {
+            PreparedStatement statement = getConnection().prepareStatement(query);
+            statement.setInt(1, newDoneValue);
+            statement.setInt(2, taskId);
+            statement.executeUpdate();
+            closeConnection();
+        } catch (SQLException e) {
+            throw new DatabaseException(
+                    "Nie udało się zaktualizować zadania, proszę spróbować ponownie",
                     ErrorCode.DB_ERROR
             );
         }
