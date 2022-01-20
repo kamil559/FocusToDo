@@ -35,6 +35,8 @@ import javafx.util.Duration;
 import javafx.util.StringConverter;
 
 import java.net.URL;
+import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.*;
 
 public class MainController implements Initializable {
@@ -51,24 +53,28 @@ public class MainController implements Initializable {
             errorAlertPane;
 
     @FXML
-    private StackPane loginWindow, addProjectWindow;
+    private StackPane loginWindow, addProjectWindow, editTaskWindow;
 
     @FXML
     private Text successAlert, errorAlert;
 
     @FXML
     private Button loginPageButton, signOutButton, signInSubmitButton, openSignUpPane, backToSignInPane,
-            signUpSubmitButton, addProjectButton2, submitAddProjectButton, hideAddProjectWindow;
+            signUpSubmitButton, addProjectButton2, submitAddProjectButton, hideAddProjectWindow,
+            cancelEditTaskButton, submitEditTaskButton;
 
     @FXML
     private TextField usernameSignInInput, passwordSignInInput, usernameSignUpInput, passwordSignUpInput,
-            newProjectName, newTaskName;
+            newProjectName, newTaskName, editTaskName, editTaskNote, editTaskId;
 
     @FXML
-    private ComboBox<Project> newTaskSelectProject;
+    private ComboBox<Project> newTaskSelectProject, editTaskProject;
 
     @FXML
     private VBox taskListVbox;
+
+    @FXML
+    private DatePicker editTaskDueDate;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -98,6 +104,8 @@ public class MainController implements Initializable {
                         hideLoginWindow();
                     } else if (addProjectWindow.isVisible()) {
                         hideAddProjectWindow();
+                    } else if (editTaskWindow.isVisible()) {
+                        hideTaskEditWindow();
                     } else if (drawerPaneState) {
                         hideDrawer();
                         FadeTransition fadeTransition = hideOpacity(opacityPane);
@@ -119,10 +127,21 @@ public class MainController implements Initializable {
         setAlertEvents();
         setAddProjectEvents();
         setAddTaskEvents();
+        setEditTaskEvents();
+    }
+
+    private void setEditTaskEvents() {
+        cancelEditTaskButton.setOnMouseClicked(event -> {
+            hideTaskEditWindow();
+        });
+
+        submitEditTaskButton.setOnMouseClicked(event -> {
+            taskEditSaveHandler();
+        });
     }
 
     private void setAddTaskEvents() {
-        fillProjectComboBoxOptions();
+        fillProjectComboBoxOptions(newTaskSelectProject);
         Tooltip.install(submitAddTaskButton, new Tooltip("Kliknij, aby dodać nowe zadanie"));
         submitAddTaskButton.setOnMouseClicked(event -> {
             submitAddTaskHandler();
@@ -142,7 +161,7 @@ public class MainController implements Initializable {
                     submitAddTaskHandler();
                 } else if (keyEvent.getCode() == KeyCode.ESCAPE) {
                     newTaskName.clear();
-                    clearProjectSelectComboBox();
+                    clearProjectSelectComboBox(newTaskSelectProject);
                 }
             }
         });
@@ -155,26 +174,24 @@ public class MainController implements Initializable {
                     submitAddTaskHandler();
                 } else if (keyEvent.getCode() == KeyCode.ESCAPE) {
                     newTaskName.clear();
-                    clearProjectSelectComboBox();
+                    clearProjectSelectComboBox(newTaskSelectProject);
                 }
             }
         });
-
-
         fillTaskElements();
     }
 
-    public void clearProjectSelectComboBox() {
-        newTaskSelectProject.setValue(null);
-        newTaskSelectProject.setPromptText("Wybierz projekt");
-        newTaskSelectProject.setButtonCell(new ListCell<>() {
+    public void clearProjectSelectComboBox(ComboBox<Project> comboBox) {
+        comboBox.setValue(null);
+        comboBox.setPromptText("Wybierz projekt");
+        comboBox.setButtonCell(new ListCell<>() {
             @Override
             protected void updateItem(Project item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty) {
                     this.setText("Wybierz projekt");
                 } else {
-                    this.setText(item.getName());
+                    this.setText(item != null ? item.getName() : "Wybierz projekt");
                 }
             }
         });
@@ -215,8 +232,10 @@ public class MainController implements Initializable {
             taskElement.setId("taskElement" + task.getId());
             ImageView finishTask = (ImageView) taskElement.lookup("#finishTask");
             Label taskElementName = (Label) taskElement.lookup("#taskElementName");
+            AnchorPane taskEditWindowOpener = (AnchorPane) taskElement.lookup("#taskEditWindowOpener");
             finishTask.setId("finishTask" + task.getId());
             taskElementName.setId("taskElementName" + task.getId());
+            taskEditWindowOpener.setId("taskEditWindowOpener" + task.getId());
             taskElementName.setText(task.getName());
             taskElements.add(taskElement);
 
@@ -227,6 +246,14 @@ public class MainController implements Initializable {
                 newImageSource = String.valueOf(getClass().getResource("/images/task_to_do.png"));
             }
             finishTask.setImage(new Image(newImageSource));
+
+            taskEditWindowOpener.setOnMouseClicked(new EventHandler<MouseEvent>() {
+                @Override
+                public void handle(MouseEvent mouseEvent) {
+                    TaskElement taskElement = ((TaskElement)((AnchorPane)mouseEvent.getSource()).getParent());
+                    showTaskEditWindow(taskElement);
+                }
+            });
 
             finishTask.setOnMouseClicked(new EventHandler<MouseEvent>() {
                 @Override
@@ -249,8 +276,9 @@ public class MainController implements Initializable {
         if (taskElements.size() > 0) taskListVbox.getChildren().addAll(taskElements);
     }
 
-    public void fillProjectComboBoxOptions() {
+    public void fillProjectComboBoxOptions(ComboBox<Project> comboBox) {
         ObservableList<Project> projectOptions = FXCollections.observableArrayList();
+        projectOptions.add(null);
         List<Project> projects;
         ProjectModel projectModel = new ProjectModel();
         List<String> errors = new ArrayList<>();
@@ -261,8 +289,8 @@ public class MainController implements Initializable {
                 projects = projectModel.getProjects(user.id);
             }
             projectOptions.addAll(projects);
-            newTaskSelectProject.setItems(projectOptions);
-            clearProjectSelectComboBox();
+            comboBox.setItems(projectOptions);
+            clearProjectSelectComboBox(comboBox);
         } catch (DatabaseException e) {
             errors.add(e.getMessage());
         } finally {
@@ -271,7 +299,7 @@ public class MainController implements Initializable {
                 showErrorAlert(joinedErrors, 10);
             }
         }
-        newTaskSelectProject.setConverter(new StringConverter<Project>() {
+        comboBox.setConverter(new StringConverter<Project>() {
             @Override
             public String toString(Project object) {
                 return object.getName();
@@ -279,7 +307,7 @@ public class MainController implements Initializable {
 
             @Override
             public Project fromString(String string) {
-                return newTaskSelectProject.getItems().stream().filter(project ->
+                return comboBox.getItems().stream().filter(project ->
                         project.getName().equals(string)).findFirst().orElse(null);
             }
         });
@@ -314,7 +342,7 @@ public class MainController implements Initializable {
                 projectModel.storeProject(projectName, user.id);
             }
             showSuccessAlert("Pomyślnie dodano projekt", 5);
-            fillProjectComboBoxOptions();
+            fillProjectComboBoxOptions(newTaskSelectProject);
             hideAddProjectWindow();
         } catch (DatabaseException | ValidationError e) {
             errors.add(e.getMessage());
@@ -336,7 +364,7 @@ public class MainController implements Initializable {
             showSuccessAlert("Pomyślnie dodano zadanie", 5);
             hideAddProjectWindow();
             newTaskName.clear();
-            clearProjectSelectComboBox();
+            clearProjectSelectComboBox(newTaskSelectProject);
             fillTaskElements();
         } catch (DatabaseException | ValidationError e) {
             errors.add(e.getMessage());
@@ -504,7 +532,9 @@ public class MainController implements Initializable {
         clearLoginWindowData();
         signOutButton.setVisible(false);
         loginPageButton.setVisible(true);
-        fillProjectComboBoxOptions();
+        fillProjectComboBoxOptions(newTaskSelectProject);
+        fillProjectComboBoxOptions(editTaskProject);
+        fillTaskElements();
         showSuccessAlert("Wylogowano pomyślnie", 5);
     }
 
@@ -521,7 +551,8 @@ public class MainController implements Initializable {
             hideLoginWindow();
             loginPageButton.setVisible(false);
             signOutButton.setVisible(true);
-            fillProjectComboBoxOptions();
+            fillProjectComboBoxOptions(newTaskSelectProject);
+            fillProjectComboBoxOptions(editTaskProject);
             fillTaskElements();
             showSuccessAlert("Zalogowano pomyślnie", 5);
         } catch (DatabaseException | AuthenticationError | ValidationError e) {
@@ -604,6 +635,7 @@ public class MainController implements Initializable {
 //      todo: hide element depending on which window is currently open
         hideLoginWindow();
         hideAddProjectWindow();
+        hideTaskEditWindow();
     }
 
     private void hideMainOpacityPane() {
@@ -611,6 +643,90 @@ public class MainController implements Initializable {
         fadeTransition.setOnFinished(event -> {
             mainOpacityPane.setVisible(false);
         });
+    }
+
+    private LocalDate getDateFromString(String date) {
+        return LocalDate.parse(date);
+    }
+
+    private Project getProject(Integer projectId) {
+        ProjectModel projectModel = new ProjectModel();
+        List<String> errors = new ArrayList<>();
+        try {
+            return projectModel.getProject(projectId);
+        } catch (DatabaseException e) {
+            errors.add(e.getMessage());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (!errors.isEmpty()) {
+                String joinedErrors = String.join("\n", errors);
+                showErrorAlert(joinedErrors, 10);
+            }
+        }
+        return null;
+    }
+
+    public void loadTaskDataToEditWindow(TaskElement task) {
+        editTaskId.setText(task.taskId.toString());
+        editTaskName.setText(task.name);
+        if (task.dueDate != null && !task.dueDate.equals("")) {
+            editTaskDueDate.setValue(getDateFromString(task.dueDate));  // todo: implement getDate properly
+        }
+        fillProjectComboBoxOptions(editTaskProject);
+        Project selectedProject = getProject(task.project);
+        editTaskProject.getSelectionModel().select(selectedProject);
+        editTaskNote.setText(task.note != null ? task.note : "");
+    }
+
+    public void taskEditSaveHandler() {
+        TaskModel taskModel = new TaskModel();
+        Integer taskId = Integer.parseInt(editTaskId.getText());
+        String taskName = editTaskName.getText();
+        LocalDate localDateDueDate = editTaskDueDate.getValue();
+        String dueDate = localDateDueDate != null ? localDateDueDate.toString() : null;
+        Project project = editTaskProject.getSelectionModel().getSelectedItem();
+        String note = editTaskNote.getText();
+
+        List<String> errors = new ArrayList<>();
+        Integer userId = user != null ? user.id : -1;
+        try {
+            taskModel.updateTask(userId, taskId, taskName, dueDate, project, note);
+            showSuccessAlert("Pomyślnie zaktualizowano zadanie", 5);
+            hideAddProjectWindow();
+            newTaskName.clear();
+
+            fillTaskElements();
+            hideTaskEditWindow();
+        } catch (DatabaseException | ValidationError e) {
+            errors.add(e.getMessage());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (!errors.isEmpty()) {
+                String joinedErrors = String.join("\n", errors);
+                showErrorAlert(joinedErrors, 10);
+            }
+        }
+    }
+
+    public void showTaskEditWindow(TaskElement task) {
+        showOpacity(mainOpacityPane);
+        loadTaskDataToEditWindow(task);
+        editTaskWindow.setVisible(true);
+    }
+
+    private void clearEditTaskWindowInputs() {
+        editTaskName.clear();
+        editTaskDueDate.setValue(null);
+        clearProjectSelectComboBox(editTaskProject);
+        editTaskNote.clear();
+    }
+
+    public void hideTaskEditWindow() {
+        hideMainOpacityPane();
+        editTaskWindow.setVisible(false);
+        clearEditTaskWindowInputs();
     }
 
     public void showAddProjectWindow() {

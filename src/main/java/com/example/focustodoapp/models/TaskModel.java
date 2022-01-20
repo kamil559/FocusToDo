@@ -18,14 +18,43 @@ public class TaskModel extends ModelInterface {
         if (Objects.equals(taskName.trim(), "")) throw new ValidationError("Nazwa zadania jest wymagana");
     }
 
-    private void checkProjectRequired(Project project) throws ValidationError {
+    private void checkProjectRequired(Project project, Boolean beingCreated) throws ValidationError {
         if (project == null || project.getId() == -1) throw new ValidationError(
-                "Aby utworzyć nowe zadanie, wymagane jest wybranie projektu");
+                beingCreated ? "Aby utworzyć nowe zadanie, wymagane jest wybranie projektu" :
+                        "Aby zaktualizować zadanie, wymagane jest wybranie projektu"
+        );
     }
+
+    private void checkProjectBelongsToUser(Integer userId, Project project) throws ValidationError, SQLException {
+        try {
+            String query = "SELECT COUNT(*) FROM Project WHERE id = ?";
+
+            if (userId != -1) {
+                query = query + " AND user = ?";
+            } else {
+                query = query + " AND user IS NULL";
+            }
+
+            PreparedStatement statement = getConnection().prepareStatement(query);
+
+            statement.setInt(1, project.getId());
+            if (userId != -1) {
+                statement.setInt(2, userId);
+            }
+
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.getInt(1) == 0) throw new ValidationError("Nie możesz edytować tego zadania");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeConnection();
+        }
+    }
+
 
     public void storeTask(String taskName, Project project) throws ValidationError, DatabaseException {
         checkTaskNameRequired(taskName);
-        checkProjectRequired(project);
+        checkProjectRequired(project, true);
         String query = "INSERT INTO Task (name, project) VALUES (?, ?)";
         try {
             PreparedStatement statement = getConnection().prepareStatement(query);
@@ -45,12 +74,12 @@ public class TaskModel extends ModelInterface {
         try {
             String query;
             if (userId != -1) {
-                query = "SELECT * FROM Task JOIN Project p on p.id = Task.project WHERE p.user = ?";
+                query = "SELECT t.id, t.name, t.done, t.due_date, t.project, t.note, t.created_at FROM Task t JOIN Project p on p.id = t.project WHERE p.user = ?";
             } else {
-                query = "SELECT * FROM Task JOIN Project p on p.id = Task.project WHERE p.user is NULL";
+                query = "SELECT t.id, t.name, t.done, t.due_date, t.project, t.note, t.created_at FROM Task t JOIN Project p on p.id = t.project WHERE p.user is NULL";
             }
             if (projectId != -1) query = query + " AND p.id = ?";
-            query = query + " ORDER BY created_at DESC";
+            query = query + " ORDER BY t.created_at DESC";
             PreparedStatement statement = getConnection().prepareStatement(query);
 
             if (userId != -1) {
@@ -69,9 +98,9 @@ public class TaskModel extends ModelInterface {
                         resultSet.getString(2),
                         resultSet.getInt(3) == 1,
                         resultSet.getString(4),
-                        resultSet.getString(5),
-                        resultSet.getString(6),
-                        resultSet.getInt(7)
+                            resultSet.getInt(5),
+                            resultSet.getString(6),
+                            resultSet.getString(7)
                     )
                 );
             }
@@ -105,5 +134,30 @@ public class TaskModel extends ModelInterface {
             );
         }
     }
+
+    public void updateTask(Integer requesterId, Integer taskId, String taskName, String dueDate, Project project,
+                           String note)
+            throws ValidationError, SQLException {
+        try {
+            checkTaskNameRequired(taskName);
+            checkProjectRequired(project, false);
+            checkProjectBelongsToUser(requesterId, project);
+            String query = "UPDATE Task SET name = ?, due_date = ?, project = ?, note = ? WHERE id = ?";
+            PreparedStatement statement = getConnection().prepareStatement(query);
+            statement.setString(1, taskName);
+            statement.setString(2, dueDate);
+            statement.setInt(3, project.getId());
+            statement.setString(4, note);
+            statement.setInt(5, taskId);
+            statement.executeUpdate();
+            closeConnection();
+        } catch (SQLException e) {
+            throw new DatabaseException(
+                    "Nie udało się zaktualizować zadania, proszę spróbować ponownie",
+                    ErrorCode.DB_ERROR
+            );
+        }
+    }
+
 }
 

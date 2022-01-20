@@ -9,7 +9,7 @@ public class Task {
     private String createdAt;
     private Integer project;
 
-    public Task(int id, String name, Boolean done, String dueDate, String note, String createdAt, Integer project) {
+    public Task(int id, String name, Boolean done, String dueDate, Integer project, String note, String createdAt) {
         this.id = id;
         this.name = name;
         this.done = done;

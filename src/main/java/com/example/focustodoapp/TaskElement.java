@@ -15,8 +15,7 @@ public class TaskElement extends AnchorPane {
     public String note;
     public String createdAt;
 
-    public TaskElement(
-            Integer taskId, String name, Boolean done, String dueDate, Integer project, String note, String createdAt) {
+    public TaskElement(Integer taskId, String name, Boolean done, String dueDate, Integer project, String note, String createdAt) {
         this.taskId = taskId;
         this.name = name;
         this.done = done;

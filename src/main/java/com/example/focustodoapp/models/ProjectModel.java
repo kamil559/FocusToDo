@@ -58,12 +58,12 @@ public class ProjectModel extends ModelInterface {
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
                 projects.add(
-                    new Project(
-                        resultSet.getInt(1),
-                        resultSet.getString(2),
-                        resultSet.getInt(3),
-                        resultSet.getString(4)
-                    )
+                        new Project(
+                                resultSet.getInt(1),
+                                resultSet.getString(2),
+                                resultSet.getInt(3),
+                                resultSet.getString(4)
+                        )
                 );
             }
             closeConnection();
@@ -101,6 +101,27 @@ public class ProjectModel extends ModelInterface {
                     ErrorCode.DB_ERROR
             );
         }
+    }
+
+    public Project getProject(Integer projectId) throws SQLException {
+        String query = "SELECT id, name, user, created_at FROM Project WHERE id = ? ORDER BY created_at DESC";
+        try {
+            PreparedStatement statement = getConnection().prepareStatement(query);
+            statement.setInt(1, projectId);
+            ResultSet resultSet = statement.executeQuery();
+            Project project = new Project(
+                    resultSet.getInt(1),
+                    resultSet.getString(2),
+                    resultSet.getInt(3),
+                    resultSet.getString(4)
+            );
+            return project;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeConnection();
+        }
+        return null;
     }
 }
 

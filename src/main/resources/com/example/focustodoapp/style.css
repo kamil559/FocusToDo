@@ -1,7 +1,7 @@
 .menuItem:hover {
-    -fx-background-color: #e5e5e5 !important;
+    -fx-background-color: #f5f5f5 !important;
 }
 
-.list-cell {
+.main-project-select .list-cell {
     -fx-text-fill: #a9a9a9 !important;
 }
