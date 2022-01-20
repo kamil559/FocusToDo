@@ -522,6 +522,7 @@ public class MainController implements Initializable {
             loginPageButton.setVisible(false);
             signOutButton.setVisible(true);
             fillProjectComboBoxOptions();
+            fillTaskElements();
             showSuccessAlert("Zalogowano pomyślnie", 5);
         } catch (DatabaseException | AuthenticationError | ValidationError e) {
             errors.add(e.getMessage());
