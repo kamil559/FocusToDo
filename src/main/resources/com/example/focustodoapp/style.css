@@ -5,3 +5,19 @@
 .main-project-select .list-cell {
     -fx-text-fill: #a9a9a9 !important;
 }
+
+.main-project-select .combo-box-popup > .list-view {
+    -fx-pref-width: 170 !important;
+}
+
+.edit-task-project-select .combo-box-popup > .list-view {
+    -fx-pref-width: 208 !important;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: transparent !important;
+}
+
+.project-element:hover {
+    -fx-background-color: #f5f5f5 !important;
+}

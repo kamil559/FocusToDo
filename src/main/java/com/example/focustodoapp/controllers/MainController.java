@@ -1,5 +1,6 @@
 package com.example.focustodoapp.controllers;
 
+import com.example.focustodoapp.ProjectElement;
 import com.example.focustodoapp.TaskElement;
 import com.example.focustodoapp.dtos.Project;
 import com.example.focustodoapp.dtos.Task;
@@ -24,9 +25,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.input.*;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -53,7 +52,7 @@ public class MainController implements Initializable {
             errorAlertPane;
 
     @FXML
-    private StackPane loginWindow, addProjectWindow, editTaskWindow;
+    private StackPane loginWindow, addProjectWindow, editTaskWindow, editProjectWindow;
 
     @FXML
     private Text successAlert, errorAlert;
@@ -61,17 +60,17 @@ public class MainController implements Initializable {
     @FXML
     private Button loginPageButton, signOutButton, signInSubmitButton, openSignUpPane, backToSignInPane,
             signUpSubmitButton, addProjectButton2, submitAddProjectButton, hideAddProjectWindow,
-            cancelEditTaskButton, submitEditTaskButton;
+            cancelEditTaskButton, submitEditTaskButton, submitEditProjectButton, cancelEditProjectButton;
 
     @FXML
     private TextField usernameSignInInput, passwordSignInInput, usernameSignUpInput, passwordSignUpInput,
-            newProjectName, newTaskName, editTaskName, editTaskNote, editTaskId;
+            newProjectName, newTaskName, editTaskName, editTaskNote, editTaskId, editProjectId, editProjectName;
 
     @FXML
     private ComboBox<Project> newTaskSelectProject, editTaskProject;
 
     @FXML
-    private VBox taskListVbox;
+    private VBox taskListVbox, projectListVbox;
 
     @FXML
     private DatePicker editTaskDueDate;
@@ -106,6 +105,8 @@ public class MainController implements Initializable {
                         hideAddProjectWindow();
                     } else if (editTaskWindow.isVisible()) {
                         hideTaskEditWindow();
+                    }  else if (editProjectWindow.isVisible()) {
+                        hideProjectEditWindow();
                     } else if (drawerPaneState) {
                         hideDrawer();
                         FadeTransition fadeTransition = hideOpacity(opacityPane);
@@ -126,6 +127,7 @@ public class MainController implements Initializable {
         setSignUpEvents();
         setAlertEvents();
         setAddProjectEvents();
+        setEditProjectEvents();
         setAddTaskEvents();
         setEditTaskEvents();
     }
@@ -197,6 +199,27 @@ public class MainController implements Initializable {
         });
     }
 
+    public void fillProjectElements() {
+        List<Project> projects;
+        ProjectModel projectModel = new ProjectModel();
+        List<String> errors = new ArrayList<>();
+        try {
+            if (user == null) {
+                projects = projectModel.getProjects();
+            } else {
+                projects = projectModel.getProjects(user.id);
+            }
+            doFillProjects(projects);
+        } catch (DatabaseException e) {
+            errors.add(e.getMessage());
+        } finally {
+            if (!errors.isEmpty()) {
+                String joinedErrors = String.join("\n", errors);
+                showErrorAlert(joinedErrors, 10);
+            }
+        }
+    }
+
     public void fillTaskElements() {
         List<Task> tasks;
         TaskModel taskModel = new TaskModel();
@@ -215,6 +238,68 @@ public class MainController implements Initializable {
                 showErrorAlert(joinedErrors, 10);
             }
         }
+    }
+
+    private void doFillProjects(List<Project> projects) {
+        List<ProjectElement> projectElements = new ArrayList<>();
+        for (Project project : projects) {
+            ProjectElement projectElement = new ProjectElement(
+                    project.getId(),
+                    project.getName(),
+                    project.getUser(),
+                    project.getCreatedAt(),
+                    project.getTasksCount(),
+                    project.getTasksDone()
+            );
+            projectElement.setId("projectElement" + project.getId());
+            Label projectNameLabel = (Label) projectElement.lookup("#projectName");
+            Label projectTaskCounter = (Label) projectElement.lookup("#projectTaskCounter");
+            projectNameLabel.setId("projectName" + project.getId());
+            projectNameLabel.setId("projectTaskCounter" + project.getId());
+            projectNameLabel.setText(projectElement.name);
+            String totalTasks = projectElement.tasksCount.toString();
+            String doneTasks = projectElement.tasksDone.toString();
+            String tasksCounter = doneTasks + "/" + totalTasks;
+            projectTaskCounter.setText(tasksCounter);
+            Tooltip.install(projectNameLabel, new Tooltip(project.getName()));
+            Tooltip.install(projectTaskCounter, new Tooltip("Liczba wykonanych i przypisanych zadań: " + tasksCounter));
+            projectElements.add(projectElement);
+
+            ContextMenu contextMenu = new ContextMenu();
+            MenuItem itemEdit = new MenuItem("Edytuj");
+            MenuItem itemDelete = new MenuItem("Usuń");
+            contextMenu.getItems().addAll(itemEdit, itemDelete);
+            contextMenu.setId("projectElementContextMenu" + project.getId());
+            itemEdit.setId("projectElementContextMenuEdit" + project.getId());
+            itemDelete.setId("projectElementContextMenuDelete" + project.getId());
+            itemEdit.setUserData(projectElement.projectId);
+            itemDelete.setUserData(projectElement.projectId);
+            contextMenu.setMinHeight(50);
+            contextMenu.setMinWidth(90);
+            contextMenu.setStyle("-fx-border-width: 0; -fx-border-radius: 5px; -fx-background-radius: 5px");
+            itemEdit.setStyle("-fx-font-size: 16px");
+            itemDelete.setStyle("-fx-font-size: 16px");
+
+            itemEdit.setOnAction(event -> {
+                Integer projectId = (Integer) ((MenuItem) event.getSource()).getUserData();
+                showProjectEditWindow(projectId);
+            });
+
+            itemDelete.setOnAction(event -> {
+                Integer projectId = (Integer) ((MenuItem) event.getSource()).getUserData();
+                showDeleteProjectPrompt(projectId);
+            });
+
+            projectElement.setOnContextMenuRequested(new EventHandler<ContextMenuEvent>() {
+                @Override
+                public void handle(ContextMenuEvent contextMenuEvent) {
+                    ProjectElement source = ((ProjectElement)contextMenuEvent.getSource());
+                    contextMenu.show(projectElement, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
+                }
+            });
+        }
+        projectListVbox.getChildren().clear();
+        if (projectElements.size() > 0) projectListVbox.getChildren().addAll(projectElements);
     }
 
     private void doFillTasks(List<Task> tasks) {
@@ -321,6 +406,7 @@ public class MainController implements Initializable {
             taskModel.updateDone(taskId, done);
             showSuccessAlert("Pomyślnie zaktualizowano zadanie", 5);
             fillTaskElements();
+            fillProjectElements();
         } catch (DatabaseException | ValidationError e) {
             errors.add(e.getMessage());
         } finally {
@@ -396,6 +482,77 @@ public class MainController implements Initializable {
         }
     }
 
+    private void setEditProjectEvents() {
+        fillProjectElements();
+
+        cancelEditProjectButton.setOnMouseClicked(event -> {
+            hideProjectEditWindow();
+        });
+
+        submitEditProjectButton.setOnMouseClicked(event -> {
+            projectEditSaveHandler();
+        });
+    }
+
+    public void projectEditSaveHandler() {
+        ProjectModel projectModel = new ProjectModel();
+        Integer projectId = Integer.parseInt(editProjectId.getText());
+        String projectName = editProjectName.getText();
+
+        List<String> errors = new ArrayList<>();
+        Integer userId = user != null ? user.id : -1;
+        try {
+            projectModel.updateProject(userId, projectId, projectName);
+            showSuccessAlert("Pomyślnie zaktualizowano projekt", 5);
+            fillProjectElements();
+            fillProjectComboBoxOptions(newTaskSelectProject);
+            fillProjectComboBoxOptions(editTaskProject);
+            hideProjectEditWindow();
+        } catch (DatabaseException | ValidationError e) {
+            errors.add(e.getMessage());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (!errors.isEmpty()) {
+                String joinedErrors = String.join("\n", errors);
+                showErrorAlert(joinedErrors, 10);
+            }
+        }
+    }
+
+    private void showProjectEditWindow(Integer projectId) {
+        Project project = getProject(projectId);
+        if (project != null) {
+            showOpacity(mainOpacityPane);
+            loadProjectDataToEditWindow(project);
+            editProjectWindow.setVisible(true);
+        }
+    }
+
+    private void loadProjectDataToEditWindow(Project project) {
+        editProjectId.setText(project.getId().toString());
+        editProjectName.setText(project.getName());
+    }
+
+    private void hideProjectEditWindow() {
+        hideMainOpacityPane();
+        editProjectWindow.setVisible(false);
+        clearEditProjectWindowInputs();
+    }
+
+    private void clearEditProjectWindowInputs() {
+        editProjectId.clear();
+        editProjectName.clear();
+    }
+
+    private void showDeleteProjectPrompt(Integer projectId) {
+
+    }
+
+    private void hideDeleteProjectPrompt(Integer projectId) {
+
+    }
+
     private void setAddProjectEvents() {
         Tooltip.install(addProjectButton1, new Tooltip("Kliknij, aby dodać nowy projekt"));
         addProjectButton1.setOnMouseClicked(event -> {
@@ -417,6 +574,16 @@ public class MainController implements Initializable {
                 if (keyEvent.getCode() == KeyCode.ENTER) {
                     submitAddProjectButton.requestFocus();
                     submitAddProjectHandler();
+                }
+            }
+        });
+
+        editProjectName.setOnKeyPressed(new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent keyEvent) {
+                if (keyEvent.getCode() == KeyCode.ENTER) {
+                    submitEditProjectButton.requestFocus();
+                    projectEditSaveHandler();
                 }
             }
         });
@@ -535,6 +702,7 @@ public class MainController implements Initializable {
         fillProjectComboBoxOptions(newTaskSelectProject);
         fillProjectComboBoxOptions(editTaskProject);
         fillTaskElements();
+        fillProjectElements();
         showSuccessAlert("Wylogowano pomyślnie", 5);
     }
 
@@ -554,6 +722,7 @@ public class MainController implements Initializable {
             fillProjectComboBoxOptions(newTaskSelectProject);
             fillProjectComboBoxOptions(editTaskProject);
             fillTaskElements();
+            fillProjectElements();
             showSuccessAlert("Zalogowano pomyślnie", 5);
         } catch (DatabaseException | AuthenticationError | ValidationError e) {
             errors.add(e.getMessage());
@@ -600,6 +769,7 @@ public class MainController implements Initializable {
         if (drawerPaneState) {
             showDrawer();
             FadeTransition fadeTransition = showOpacity(opacityPane);
+            fillProjectElements();
             fadeTransition.setOnFinished(event -> {
                 opacityPaneState = true;
             });
@@ -636,6 +806,7 @@ public class MainController implements Initializable {
         hideLoginWindow();
         hideAddProjectWindow();
         hideTaskEditWindow();
+        hideProjectEditWindow();
     }
 
     private void hideMainOpacityPane() {
@@ -671,7 +842,7 @@ public class MainController implements Initializable {
         editTaskId.setText(task.taskId.toString());
         editTaskName.setText(task.name);
         if (task.dueDate != null && !task.dueDate.equals("")) {
-            editTaskDueDate.setValue(getDateFromString(task.dueDate));  // todo: implement getDate properly
+            editTaskDueDate.setValue(getDateFromString(task.dueDate));
         }
         fillProjectComboBoxOptions(editTaskProject);
         Project selectedProject = getProject(task.project);
@@ -693,9 +864,6 @@ public class MainController implements Initializable {
         try {
             taskModel.updateTask(userId, taskId, taskName, dueDate, project, note);
             showSuccessAlert("Pomyślnie zaktualizowano zadanie", 5);
-            hideAddProjectWindow();
-            newTaskName.clear();
-
             fillTaskElements();
             hideTaskEditWindow();
         } catch (DatabaseException | ValidationError e) {
