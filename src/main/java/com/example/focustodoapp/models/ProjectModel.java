@@ -27,7 +27,7 @@ public class ProjectModel extends ModelInterface {
             closeConnection();
         } catch (SQLException e) {
             throw new DatabaseException(
-                    "Nie udało się utworzyć nowego projektu, proszę spróbować ponownie",
+                    "Nie udało się utworzyć nowego projektu, proszę spróbować ponownie później",
                     ErrorCode.DB_ERROR
             );
         }
@@ -44,7 +44,7 @@ public class ProjectModel extends ModelInterface {
             closeConnection();
         } catch (SQLException e) {
             throw new DatabaseException(
-                    "Nie udało się utworzyć nowego projektu, proszę spróbować ponownie",
+                    "Nie udało się utworzyć nowego projektu, proszę spróbować ponownie później",
                     ErrorCode.DB_ERROR
             );
         }
@@ -131,20 +131,28 @@ public class ProjectModel extends ModelInterface {
         return null;
     }
 
-    private void checkProjectBelongsToUser(Integer userId, Integer projectId) throws ValidationError, SQLException {
-        if (userId != -1) {
-            String query = "SELECT COUNT(*) FROM Project WHERE id = ? AND user = ?";
-            try{
-                PreparedStatement statement = getConnection().prepareStatement(query);
-                statement.setInt(1, projectId);
-                statement.setInt(2, userId);
-                ResultSet resultSet = statement.executeQuery();
-                if (resultSet.getInt(1) == 0) throw new ValidationError("Nie możesz edytować tego projektu");
-            } catch (SQLException e) {
-                e.printStackTrace();
-            } finally {
-                closeConnection();
+    private void checkProjectBelongsToUser(Integer userId, Integer projectId, String errorString)
+            throws ValidationError, SQLException {
+        String query;
+        try{
+            if (userId != -1) {
+                query = "SELECT COUNT(*) FROM Project WHERE id = ? AND user = ?";
+            } else {
+                query = "SELECT COUNT(*) FROM Project WHERE id = ? AND user IS NULL";
             }
+            PreparedStatement statement = getConnection().prepareStatement(query);
+            statement.setInt(1, projectId);
+
+            if (userId != -1) {
+                statement.setInt(2, userId);
+            }
+
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.getInt(1) == 0) throw new ValidationError(errorString);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeConnection();
         }
     }
 
@@ -152,7 +160,7 @@ public class ProjectModel extends ModelInterface {
             ValidationError, DatabaseException {
         try {
             checkProjectNameRequired(projectName);
-            checkProjectBelongsToUser(requesterId, projectId);
+            checkProjectBelongsToUser(requesterId, projectId, "Nie możesz edytować tego projektu");
             String query = "UPDATE Project SET name = ? WHERE id = ?";
             PreparedStatement statement = getConnection().prepareStatement(query);
             statement.setString(1, projectName);
@@ -161,7 +169,23 @@ public class ProjectModel extends ModelInterface {
             closeConnection();
         } catch (SQLException e) {
             throw new DatabaseException(
-                    "Nie udało się zaktualizować projektu, proszę spróbować ponownie",
+                    "Nie udało się zaktualizować projektu, proszę spróbować ponownie później",
+                    ErrorCode.DB_ERROR
+            );
+        }
+    }
+
+    public void deleteProject(Integer requesterId, Integer projectId) throws ValidationError, DatabaseException {
+        try {
+            checkProjectBelongsToUser(requesterId, projectId, "Nie możesz usunąć tego projektu");
+            String query = "DELETE FROM Project WHERE id = ?";
+            PreparedStatement statement = getConnection().prepareStatement(query);
+            statement.setInt(1, projectId);
+            statement.executeUpdate();
+            closeConnection();
+        } catch (SQLException e) {
+            throw new DatabaseException(
+                    "Nie udało się usunąć projektu, proszę spróbować ponownie później",
                     ErrorCode.DB_ERROR
             );
         }

@@ -45,14 +45,15 @@ public class MainController implements Initializable {
 
     @FXML
     private ImageView drawerImage, loginWindowClose, loginWindowClose2, closeSuccessAlertButton, closeErrorAlertButton,
-            addProjectButton1, submitAddTaskButton;
+            addProjectButton1, submitAddTaskButton, deleteTask;
 
     @FXML
     private AnchorPane mainPane, opacityPane, drawerPane, mainOpacityPane, signInPane, signUpPane, successAlertPane,
             errorAlertPane;
 
     @FXML
-    private StackPane loginWindow, addProjectWindow, editTaskWindow, editProjectWindow;
+    private StackPane loginWindow, addProjectWindow, editTaskWindow, editProjectWindow, removeProjectPrompt,
+            removeTaskPrompt;
 
     @FXML
     private Text successAlert, errorAlert;
@@ -60,11 +61,13 @@ public class MainController implements Initializable {
     @FXML
     private Button loginPageButton, signOutButton, signInSubmitButton, openSignUpPane, backToSignInPane,
             signUpSubmitButton, addProjectButton2, submitAddProjectButton, hideAddProjectWindow,
-            cancelEditTaskButton, submitEditTaskButton, submitEditProjectButton, cancelEditProjectButton;
+            cancelEditTaskButton, submitEditTaskButton, submitEditProjectButton, cancelEditProjectButton,
+            removeProjectSubmitButton, removeTaskSubmitButton, removeProjectCancelButton, removeTaskCancelButton;
 
     @FXML
     private TextField usernameSignInInput, passwordSignInInput, usernameSignUpInput, passwordSignUpInput,
-            newProjectName, newTaskName, editTaskName, editTaskNote, editTaskId, editProjectId, editProjectName;
+            newProjectName, newTaskName, editTaskName, editTaskNote, editTaskId, editProjectId, editProjectName,
+            removeProjectId, removeTaskId;
 
     @FXML
     private ComboBox<Project> newTaskSelectProject, editTaskProject;
@@ -105,8 +108,12 @@ public class MainController implements Initializable {
                         hideAddProjectWindow();
                     } else if (editTaskWindow.isVisible()) {
                         hideTaskEditWindow();
-                    }  else if (editProjectWindow.isVisible()) {
+                    } else if (editProjectWindow.isVisible()) {
                         hideProjectEditWindow();
+                    } else if (removeProjectPrompt.isVisible()) {
+                        hideDeleteProjectPrompt();
+                    }  else if (removeTaskPrompt.isVisible()) {
+                        hideDeleteTaskPrompt();
                     } else if (drawerPaneState) {
                         hideDrawer();
                         FadeTransition fadeTransition = hideOpacity(opacityPane);
@@ -128,8 +135,20 @@ public class MainController implements Initializable {
         setAlertEvents();
         setAddProjectEvents();
         setEditProjectEvents();
+        setRemoveProjectEvents();
         setAddTaskEvents();
         setEditTaskEvents();
+        setRemoveTaskEvents();
+    }
+
+    private void setRemoveTaskEvents(){
+        removeTaskSubmitButton.setOnMouseClicked(event -> {
+            removeTaskSubmitHandler();
+        });
+
+        removeTaskCancelButton.setOnMouseClicked(event -> {
+            hideDeleteTaskPrompt();
+        });
     }
 
     private void setEditTaskEvents() {
@@ -293,7 +312,6 @@ public class MainController implements Initializable {
             projectElement.setOnContextMenuRequested(new EventHandler<ContextMenuEvent>() {
                 @Override
                 public void handle(ContextMenuEvent contextMenuEvent) {
-                    ProjectElement source = ((ProjectElement)contextMenuEvent.getSource());
                     contextMenu.show(projectElement, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
                 }
             });
@@ -316,9 +334,12 @@ public class MainController implements Initializable {
             );
             taskElement.setId("taskElement" + task.getId());
             ImageView finishTask = (ImageView) taskElement.lookup("#finishTask");
+            ImageView deleteTask = (ImageView) taskElement.lookup("#deleteTask");
             Label taskElementName = (Label) taskElement.lookup("#taskElementName");
             AnchorPane taskEditWindowOpener = (AnchorPane) taskElement.lookup("#taskEditWindowOpener");
             finishTask.setId("finishTask" + task.getId());
+            deleteTask.setId("deleteTask" + task.getId());
+            deleteTask.setUserData(task.getId());
             taskElementName.setId("taskElementName" + task.getId());
             taskEditWindowOpener.setId("taskEditWindowOpener" + task.getId());
             taskElementName.setText(task.getName());
@@ -335,25 +356,40 @@ public class MainController implements Initializable {
             taskEditWindowOpener.setOnMouseClicked(new EventHandler<MouseEvent>() {
                 @Override
                 public void handle(MouseEvent mouseEvent) {
-                    TaskElement taskElement = ((TaskElement)((AnchorPane)mouseEvent.getSource()).getParent());
-                    showTaskEditWindow(taskElement);
+                    if (mouseEvent.getButton() != MouseButton.SECONDARY) {
+                        TaskElement taskElement = ((TaskElement)((AnchorPane)mouseEvent.getSource()).getParent());
+                        showTaskEditWindow(taskElement);
+                    }
+                    mouseEvent.consume();
                 }
             });
 
             finishTask.setOnMouseClicked(new EventHandler<MouseEvent>() {
                 @Override
                 public void handle(MouseEvent mouseEvent) {
-                    ImageView source = ((ImageView)mouseEvent.getSource());
-                    TaskElement taskElement = ((TaskElement)((ImageView)mouseEvent.getSource()).getParent());
-                    String newImageSource;
-                    if (taskElement.done) {
-                        newImageSource = String.valueOf(getClass().getResource("/images/task_to_do.png"));
-                    } else {
-                        newImageSource = String.valueOf(getClass().getResource("/images/task_done.png"));
+                    if (mouseEvent.getButton() != MouseButton.SECONDARY) {
+                        ImageView source = ((ImageView)mouseEvent.getSource());
+                        TaskElement taskElement = ((TaskElement)((ImageView)mouseEvent.getSource()).getParent());
+                        String newImageSource;
+                        if (taskElement.done) {
+                            newImageSource = String.valueOf(getClass().getResource("/images/task_to_do.png"));
+                        } else {
+                            newImageSource = String.valueOf(getClass().getResource("/images/task_done.png"));
+                        }
+                        source.setImage(new Image(newImageSource));
+                        taskElement.done = !taskElement.done;
+                        updateTaskDone(taskElement.taskId, taskElement.done);
                     }
-                    source.setImage(new Image(newImageSource));
-                    taskElement.done = !taskElement.done;
-                    updateTaskDone(taskElement.taskId, taskElement.done);
+                }
+            });
+
+            deleteTask.setOnMouseClicked(new EventHandler<MouseEvent>() {
+                @Override
+                public void handle(MouseEvent mouseEvent) {
+                    if (mouseEvent.getButton() != MouseButton.SECONDARY) {
+                        Integer taskId = (Integer) ((ImageView) mouseEvent.getSource()).getUserData();
+                        if (taskId != null) { showDeleteTaskPrompt(taskId); }
+                    }
                 }
             });
         }
@@ -494,6 +530,16 @@ public class MainController implements Initializable {
         });
     }
 
+    private void setRemoveProjectEvents() {
+        removeProjectSubmitButton.setOnMouseClicked(event -> {
+            removeProjectSubmitHandler();
+        });
+
+        removeProjectCancelButton.setOnMouseClicked(event -> {
+            hideDeleteProjectPrompt();
+        });
+    }
+
     public void projectEditSaveHandler() {
         ProjectModel projectModel = new ProjectModel();
         Integer projectId = Integer.parseInt(editProjectId.getText());
@@ -510,8 +556,6 @@ public class MainController implements Initializable {
             hideProjectEditWindow();
         } catch (DatabaseException | ValidationError e) {
             errors.add(e.getMessage());
-        } catch (SQLException e) {
-            e.printStackTrace();
         } finally {
             if (!errors.isEmpty()) {
                 String joinedErrors = String.join("\n", errors);
@@ -545,12 +589,73 @@ public class MainController implements Initializable {
         editProjectName.clear();
     }
 
-    private void showDeleteProjectPrompt(Integer projectId) {
-
+    private void showDeleteTaskPrompt(Integer taskId) {
+        showOpacity(mainOpacityPane);
+        removeTaskId.setText(taskId.toString());
+        removeTaskPrompt.setVisible(true);
     }
 
-    private void hideDeleteProjectPrompt(Integer projectId) {
+    private void hideDeleteTaskPrompt() {
+        hideMainOpacityPane();
+        removeTaskId.clear();
+        removeTaskPrompt.setVisible(false);
+    }
 
+    private void removeTaskSubmitHandler() {
+        TaskModel taskModel = new TaskModel();
+        Integer taskId = Integer.parseInt(removeTaskId.getText());
+
+        List<String> errors = new ArrayList<>();
+        Integer userId = user != null ? user.id : -1;
+        try {
+            taskModel.deleteTask(userId, taskId);
+            showSuccessAlert("Zadanie zostało usunięte", 5);
+            fillProjectElements();
+            fillTaskElements();
+            hideDeleteTaskPrompt();
+        } catch (DatabaseException | ValidationError e) {
+            errors.add(e.getMessage());
+        } finally {
+            if (!errors.isEmpty()) {
+                String joinedErrors = String.join("\n", errors);
+                showErrorAlert(joinedErrors, 10);
+            }
+        }
+    }
+
+    private void showDeleteProjectPrompt(Integer projectId) {
+        showOpacity(mainOpacityPane);
+        removeProjectId.setText(projectId.toString());
+        removeProjectPrompt.setVisible(true);
+    }
+
+    private void hideDeleteProjectPrompt() {
+        hideMainOpacityPane();
+        removeProjectId.clear();
+        removeProjectPrompt.setVisible(false);
+    }
+
+    private void removeProjectSubmitHandler() {
+        ProjectModel projectModel = new ProjectModel();
+        Integer projectId = Integer.parseInt(removeProjectId.getText());
+
+        List<String> errors = new ArrayList<>();
+        Integer userId = user != null ? user.id : -1;
+        try {
+            projectModel.deleteProject(userId, projectId);
+            showSuccessAlert("Projekt został usunięty", 5);
+            fillProjectElements();
+            fillProjectComboBoxOptions(newTaskSelectProject);
+            fillProjectComboBoxOptions(editTaskProject);
+            hideDeleteProjectPrompt();
+        } catch (DatabaseException | ValidationError e) {
+            errors.add(e.getMessage());
+        } finally {
+            if (!errors.isEmpty()) {
+                String joinedErrors = String.join("\n", errors);
+                showErrorAlert(joinedErrors, 10);
+            }
+        }
     }
 
     private void setAddProjectEvents() {
@@ -807,6 +912,8 @@ public class MainController implements Initializable {
         hideAddProjectWindow();
         hideTaskEditWindow();
         hideProjectEditWindow();
+        hideDeleteProjectPrompt();
+        hideDeleteTaskPrompt();
     }
 
     private void hideMainOpacityPane() {

@@ -24,7 +24,7 @@ public class ModelInterface {
     }
 
     public void closeConnection() throws SQLException {
-        if (connection != null && !connection.isClosed()) {
+        if (connection != null) {
             connection.close();
         }
     }

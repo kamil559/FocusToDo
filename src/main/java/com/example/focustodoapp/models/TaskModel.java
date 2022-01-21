@@ -159,5 +159,45 @@ public class TaskModel extends ModelInterface {
         }
     }
 
+    private void checkTaskBelongsToUser(Integer userId, Integer taskId)
+            throws ValidationError, SQLException {
+        String query;
+        try{
+            if (userId != -1) {
+                query = "SELECT COUNT(*) FROM Task t JOIN Project P on t.project = P.id WHERE t.id = ? AND p.user = ?";
+            } else {
+                query = "SELECT COUNT(*) FROM Task t JOIN Project P on t.project = P.id WHERE t.id = ? AND p.user IS NULL";
+            }
+            PreparedStatement statement = getConnection().prepareStatement(query);
+            statement.setInt(1, taskId);
+
+            if (userId != -1) {
+                statement.setInt(2, userId);
+            }
+
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.getInt(1) == 0) throw new ValidationError("Nie możesz usunąć tego zadania");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeConnection();
+        }
+    }
+
+    public void deleteTask(Integer requesterId, Integer taskId) throws ValidationError, DatabaseException {
+        try {
+            checkTaskBelongsToUser(requesterId, taskId);
+            String query = "DELETE FROM Task WHERE id = ?";
+            PreparedStatement statement = getConnection().prepareStatement(query);
+            statement.setInt(1, taskId);
+            statement.executeUpdate();
+            closeConnection();
+        } catch (SQLException e) {
+            throw new DatabaseException(
+                    "Nie udało się usunąć projektu, proszę spróbować ponownie później",
+                    ErrorCode.DB_ERROR
+            );
+        }
+    }
 }
 

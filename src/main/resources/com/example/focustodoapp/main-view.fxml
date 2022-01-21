@@ -421,7 +421,7 @@
             <AnchorPane maxHeight="150.0" maxWidth="300.0" minHeight="150.0" minWidth="300.0" prefHeight="150.0" prefWidth="300.0" style="-fx-background-color: #fff; -fx-view-order: 0; -fx-border-radius: 10px; -fx-background-radius: 10px;">
                <children>
                   <TextField fx:id="editProjectName" alignment="BASELINE_LEFT" layoutX="18.0" layoutY="50.0" prefHeight="32.0" prefWidth="266.0" promptText="Nazwa projektu" style="-fx-padding: 10px;" AnchorPane.leftAnchor="18.0" AnchorPane.rightAnchor="16.0" AnchorPane.topAnchor="50.0" />
-                  <Button fx:id="submitEditProjectButton" layoutX="196.0" layoutY="112.0" maxHeight="26.0" maxWidth="88.0" minHeight="26.0" minWidth="88.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="88.0" style="-fx-background-color: #fe5c44;" text="Zapisz" textFill="WHITE">
+                  <Button fx:id="submitEditProjectButton" layoutX="196.0" layoutY="112.0" maxHeight="26.0" maxWidth="88.0" minHeight="26.0" minWidth="88.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="88.0" style="-fx-background-color: #fe5c44;" text="Zapisz" textFill="WHITE" AnchorPane.bottomAnchor="12.0" AnchorPane.rightAnchor="16.0">
                      <font>
                         <Font name="Ubuntu" size="14.0" />
                      </font>
@@ -437,7 +437,7 @@
                         <Cursor fx:constant="DEFAULT" />
                      </cursor>
                   </Button>
-                  <Button fx:id="cancelEditProjectButton" layoutX="102.0" layoutY="112.0" maxHeight="26.0" maxWidth="88.0" minHeight="26.0" minWidth="88.0" mnemonicParsing="false" prefHeight="24.0" prefWidth="88.0" style="-fx-background-color: #ffffff; -fx-border-color: #a9a9a9; -fx-border-radius: 2px;" text="Anuluj">
+                  <Button fx:id="cancelEditProjectButton" layoutX="191.0" layoutY="112.0" maxHeight="26.0" maxWidth="88.0" minHeight="26.0" minWidth="88.0" mnemonicParsing="false" prefHeight="24.0" prefWidth="88.0" style="-fx-background-color: #ffffff; -fx-border-color: #a9a9a9; -fx-border-radius: 2px;" text="Anuluj" AnchorPane.bottomAnchor="12.0" AnchorPane.leftAnchor="16.0">
                      <font>
                         <Font name="Ubuntu" size="14.0" />
                      </font>
@@ -446,6 +446,72 @@
                      </cursor>
                   </Button>
                   <TextField fx:id="editProjectId" editable="false" visible="false" />
+               </children>
+            </AnchorPane>
+         </children>
+      </StackPane>
+      <StackPane fx:id="removeProjectPrompt" alignment="BASELINE_CENTER" layoutX="260.0" layoutY="150.0" maxHeight="150.0" maxWidth="300.0" minHeight="150.0" minWidth="300.0" prefHeight="150.0" prefWidth="301.0" visible="false">
+         <children>
+            <AnchorPane maxHeight="150.0" maxWidth="300.0" minHeight="150.0" minWidth="300.0" prefHeight="150.0" prefWidth="300.0" style="-fx-background-color: #fff; -fx-view-order: 0; -fx-border-radius: 10px; -fx-background-radius: 10px;">
+               <children>
+                  <Button fx:id="removeProjectSubmitButton" layoutX="196.0" layoutY="112.0" maxHeight="26.0" maxWidth="88.0" minHeight="26.0" minWidth="88.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="88.0" style="-fx-background-color: #fe5c44;" text="Potwierdź" textFill="WHITE" AnchorPane.bottomAnchor="12.0" AnchorPane.rightAnchor="16.0">
+                     <font>
+                        <Font name="Ubuntu" size="14.0" />
+                     </font>
+                     <cursor>
+                        <Cursor fx:constant="CLOSED_HAND" />
+                     </cursor>
+                  </Button>
+                  <Button fx:id="removeProjectCancelButton" layoutX="102.0" layoutY="112.0" maxHeight="26.0" maxWidth="88.0" minHeight="26.0" minWidth="88.0" mnemonicParsing="false" prefHeight="24.0" prefWidth="88.0" style="-fx-background-color: #ffffff; -fx-border-color: #a9a9a9; -fx-border-radius: 2px;" text="Anuluj" AnchorPane.bottomAnchor="12.0" AnchorPane.leftAnchor="16.0">
+                     <font>
+                        <Font name="Ubuntu" size="14.0" />
+                     </font>
+                     <cursor>
+                        <Cursor fx:constant="CLOSED_HAND" />
+                     </cursor>
+                  </Button>
+                  <TextField fx:id="removeProjectId" editable="false" maxHeight="5.0" maxWidth="5.0" minHeight="5.0" minWidth="5.0" prefHeight="5.0" prefWidth="5.0" visible="false" />
+                  <Button layoutX="17.0" layoutY="16.0" mnemonicParsing="false" prefHeight="76.0" prefWidth="266.0" style="-fx-background-color: transparent; -fx-border-color: transparent;" text="Czy jesteś pewny? Operacja jest bezpowrotna, powiązane zadania zostaną utracone." textAlignment="CENTER" wrapText="true">
+                     <font>
+                        <Font name="Ubuntu" size="16.0" />
+                     </font>
+                     <cursor>
+                        <Cursor fx:constant="DEFAULT" />
+                     </cursor>
+                  </Button>
+               </children>
+            </AnchorPane>
+         </children>
+      </StackPane>
+      <StackPane fx:id="removeTaskPrompt" alignment="BASELINE_CENTER" layoutX="260.0" layoutY="150.0" maxHeight="150.0" maxWidth="300.0" minHeight="150.0" minWidth="300.0" prefHeight="150.0" prefWidth="301.0" visible="false">
+         <children>
+            <AnchorPane maxHeight="150.0" maxWidth="300.0" minHeight="150.0" minWidth="300.0" prefHeight="150.0" prefWidth="300.0" style="-fx-background-color: #fff; -fx-view-order: 0; -fx-border-radius: 10px; -fx-background-radius: 10px;">
+               <children>
+                  <Button fx:id="removeTaskSubmitButton" layoutX="196.0" layoutY="112.0" maxHeight="26.0" maxWidth="88.0" minHeight="26.0" minWidth="88.0" mnemonicParsing="false" prefHeight="26.0" prefWidth="88.0" style="-fx-background-color: #fe5c44;" text="Potwierdź" textFill="WHITE" AnchorPane.bottomAnchor="12.0" AnchorPane.rightAnchor="16.0">
+                     <font>
+                        <Font name="Ubuntu" size="14.0" />
+                     </font>
+                     <cursor>
+                        <Cursor fx:constant="CLOSED_HAND" />
+                     </cursor>
+                  </Button>
+                  <Button fx:id="removeTaskCancelButton" layoutX="102.0" layoutY="112.0" maxHeight="26.0" maxWidth="88.0" minHeight="26.0" minWidth="88.0" mnemonicParsing="false" prefHeight="24.0" prefWidth="88.0" style="-fx-background-color: #ffffff; -fx-border-color: #a9a9a9; -fx-border-radius: 2px;" text="Anuluj" AnchorPane.bottomAnchor="12.0" AnchorPane.leftAnchor="16.0">
+                     <font>
+                        <Font name="Ubuntu" size="14.0" />
+                     </font>
+                     <cursor>
+                        <Cursor fx:constant="CLOSED_HAND" />
+                     </cursor>
+                  </Button>
+                  <TextField fx:id="removeTaskId" editable="false" maxHeight="5.0" maxWidth="5.0" minHeight="5.0" minWidth="5.0" prefHeight="5.0" prefWidth="5.0" visible="false" />
+                  <Button layoutX="17.0" layoutY="16.0" mnemonicParsing="false" prefHeight="76.0" prefWidth="266.0" style="-fx-background-color: transparent; -fx-border-color: transparent;" text="Czy jesteś pewny? Operacja jest bezpowrotna." textAlignment="CENTER" wrapText="true">
+                     <font>
+                        <Font name="Ubuntu" size="16.0" />
+                     </font>
+                     <cursor>
+                        <Cursor fx:constant="DEFAULT" />
+                     </cursor>
+                  </Button>
                </children>
             </AnchorPane>
          </children>
