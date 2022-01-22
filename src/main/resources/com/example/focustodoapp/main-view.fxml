@@ -50,40 +50,7 @@
          <children>
             <VBox alignment="TOP_CENTER" prefHeight="225.0" prefWidth="44.0" spacing="16.0" AnchorPane.topAnchor="20.0">
                <children>
-                  <ImageView fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
-                     <VBox.margin>
-                        <Insets />
-                     </VBox.margin>
-                     <image>
-                        <Image url="@../../../images/project-today.png" />
-                     </image>
-                     <cursor>
-                        <Cursor fx:constant="CLOSED_HAND" />
-                     </cursor>
-                  </ImageView>
-                  <ImageView fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
-                     <VBox.margin>
-                        <Insets />
-                     </VBox.margin>
-                     <image>
-                        <Image url="@../../../images/project-tomorrow.png" />
-                     </image>
-                     <cursor>
-                        <Cursor fx:constant="CLOSED_HAND" />
-                     </cursor>
-                  </ImageView>
-                  <ImageView fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
-                     <VBox.margin>
-                        <Insets />
-                     </VBox.margin>
-                     <image>
-                        <Image url="@../../../images/project-upcoming.png" />
-                     </image>
-                     <cursor>
-                        <Cursor fx:constant="CLOSED_HAND" />
-                     </cursor>
-                  </ImageView>
-                  <ImageView fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
+                  <ImageView fx:id="allTasksBtn" fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
                      <VBox.margin>
                         <Insets />
                      </VBox.margin>
@@ -94,7 +61,40 @@
                         <Cursor fx:constant="CLOSED_HAND" />
                      </cursor>
                   </ImageView>
-                  <ImageView fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
+                  <ImageView fx:id="todayTasksBtn" fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
+                     <VBox.margin>
+                        <Insets />
+                     </VBox.margin>
+                     <image>
+                        <Image url="@../../../images/project-today.png" />
+                     </image>
+                     <cursor>
+                        <Cursor fx:constant="CLOSED_HAND" />
+                     </cursor>
+                  </ImageView>
+                  <ImageView fx:id="tomorrowTasksBtn" fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
+                     <VBox.margin>
+                        <Insets />
+                     </VBox.margin>
+                     <image>
+                        <Image url="@../../../images/project-tomorrow.png" />
+                     </image>
+                     <cursor>
+                        <Cursor fx:constant="CLOSED_HAND" />
+                     </cursor>
+                  </ImageView>
+                  <ImageView fx:id="upcomingTasksBtn" fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
+                     <VBox.margin>
+                        <Insets />
+                     </VBox.margin>
+                     <image>
+                        <Image url="@../../../images/project-upcoming.png" />
+                     </image>
+                     <cursor>
+                        <Cursor fx:constant="CLOSED_HAND" />
+                     </cursor>
+                  </ImageView>
+                  <ImageView fx:id="doneTasksBtn" fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
                      <VBox.margin>
                         <Insets />
                      </VBox.margin>
@@ -203,9 +203,9 @@
       </StackPane>
       <AnchorPane fx:id="drawerPane" layoutX="44.0" layoutY="45.0" prefHeight="500.0" prefWidth="160.0" style="-fx-background-color: #ffffff; -fx-view-order: 3; -fx-border-width: 0 1px 0 0; -fx-border-color: #a9a9a9;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="44.0" AnchorPane.topAnchor="46.0">
          <children>
-            <VBox prefHeight="200.0" prefWidth="100.0" spacing="20.0" style="-fx-background-color: #ffffff; -fx-view-order: 2;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="20.0">
+            <VBox prefHeight="225.0" prefWidth="100.0" spacing="20.0" style="-fx-background-color: #ffffff; -fx-view-order: 2;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="20.0">
                <children>
-                  <Button alignment="BASELINE_LEFT" mnemonicParsing="false" prefHeight="32.0" prefWidth="179.0" style="-fx-background-color: #ffffff;" styleClass="menuItem" text="Dziś" textFill="#333333">
+                  <Button fx:id="allTasksView" alignment="BASELINE_LEFT" defaultButton="true" mnemonicParsing="false" prefHeight="32.0" prefWidth="179.0" style="-fx-background-color: #fff; -fx-border-radius: 0; -fx-background-radius: 0;" styleClass="menuItem" text="Wszystkie" textFill="#fe5c44">
                      <font>
                         <Font name="Ubuntu" size="16.0" />
                      </font>
@@ -213,7 +213,7 @@
                         <Cursor fx:constant="CLOSED_HAND" />
                      </cursor>
                   </Button>
-                  <Button alignment="BASELINE_LEFT" mnemonicParsing="false" prefHeight="32.0" prefWidth="179.0" style="-fx-background-color: #ffffff;" styleClass="menuItem" text="Jutro" textFill="#333333">
+                  <Button fx:id="todayTasksView" alignment="BASELINE_LEFT" mnemonicParsing="false" prefHeight="32.0" prefWidth="179.0" style="-fx-background-color: #ffffff; -fx-border-radius: 0; -fx-background-radius: 0;" styleClass="menuItem" text="Dziś" textFill="#fe5c44">
                      <font>
                         <Font name="Ubuntu" size="16.0" />
                      </font>
@@ -221,7 +221,7 @@
                         <Cursor fx:constant="CLOSED_HAND" />
                      </cursor>
                   </Button>
-                  <Button alignment="BASELINE_LEFT" mnemonicParsing="false" prefHeight="32.0" prefWidth="179.0" style="-fx-background-color: #ffffff;" styleClass="menuItem" text="Nadchodzące" textFill="#333333">
+                  <Button fx:id="tomorrowTasksView" alignment="BASELINE_LEFT" mnemonicParsing="false" prefHeight="32.0" prefWidth="179.0" style="-fx-background-color: #ffffff; -fx-border-radius: 0; -fx-background-radius: 0;" styleClass="menuItem" text="Jutro" textFill="#fe5c44">
                      <font>
                         <Font name="Ubuntu" size="16.0" />
                      </font>
@@ -229,7 +229,7 @@
                         <Cursor fx:constant="CLOSED_HAND" />
                      </cursor>
                   </Button>
-                  <Button alignment="BASELINE_LEFT" mnemonicParsing="false" prefHeight="32.0" prefWidth="179.0" style="-fx-background-color: #ffffff;" styleClass="menuItem" text="Później" textFill="#333333">
+                  <Button fx:id="upcomingTasksView" alignment="BASELINE_LEFT" mnemonicParsing="false" prefHeight="32.0" prefWidth="179.0" style="-fx-background-color: #ffffff; -fx-border-radius: 0; -fx-background-radius: 0;" styleClass="menuItem" text="Nadchodzące" textFill="#fe5c44">
                      <font>
                         <Font name="Ubuntu" size="16.0" />
                      </font>
@@ -237,7 +237,7 @@
                         <Cursor fx:constant="CLOSED_HAND" />
                      </cursor>
                   </Button>
-                  <Button alignment="BASELINE_LEFT" mnemonicParsing="false" prefHeight="32.0" prefWidth="179.0" style="-fx-background-color: #ffffff;" styleClass="menuItem" text="Ukończone" textFill="#333333">
+                  <Button fx:id="doneTasksView" alignment="BASELINE_LEFT" mnemonicParsing="false" prefHeight="32.0" prefWidth="179.0" style="-fx-background-color: #ffffff; -fx-border-radius: 0; -fx-background-radius: 0;" styleClass="menuItem" text="Ukończone" textFill="#fe5c44">
                      <font>
                         <Font name="Ubuntu" size="16.0" />
                      </font>
@@ -356,7 +356,7 @@
                      </cursor></ComboBox>
                </children>
             </AnchorPane>
-            <Button alignment="BASELINE_CENTER" layoutX="319.0" layoutY="5.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="124.0" style="-fx-background-color: transparent; -fx-border-color: transparent;" text="Zadania" AnchorPane.leftAnchor="319.0" AnchorPane.rightAnchor="317.0" AnchorPane.topAnchor="5.0">
+            <Button fx:id="taskList" alignment="BASELINE_CENTER" layoutX="319.0" layoutY="5.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="124.0" style="-fx-background-color: transparent; -fx-border-color: transparent;" text="Zadania" AnchorPane.leftAnchor="319.0" AnchorPane.rightAnchor="317.0" AnchorPane.topAnchor="5.0">
                <font>
                   <Font name="Ubuntu Bold" size="18.0" />
                </font>

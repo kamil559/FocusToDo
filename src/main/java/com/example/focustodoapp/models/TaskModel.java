@@ -70,7 +70,34 @@ public class TaskModel extends ModelInterface {
         }
     }
 
-    public List<Task> getTasks(Integer userId, Integer projectId) throws DatabaseException {
+    public List<Task> getDoneTasks(Integer userId, Integer projectId) throws DatabaseException {
+        try {
+            String query;
+            if (userId != -1) {
+                query = "SELECT t.id, t.name, t.done, t.due_date, t.project, t.note, t.created_at FROM Task t JOIN Project p on p.id = t.project WHERE t.done = 1 AND p.user = ?";
+            } else {
+                query = "SELECT t.id, t.name, t.done, t.due_date, t.project, t.note, t.created_at FROM Task t JOIN Project p on p.id = t.project WHERE t.done = 1 AND p.user is NULL";
+            }
+            if (projectId != -1) query = query + " AND p.id = ?";
+            query = query + " ORDER BY t.created_at DESC";
+            PreparedStatement statement = getConnection().prepareStatement(query);
+
+            if (userId != -1) {
+                statement.setInt(1, userId);
+                if (projectId != -1) statement.setInt(2, projectId);
+            } else {
+                if (projectId != -1) statement.setInt(1, projectId);
+            }
+            return getTasks(statement);
+        } catch (SQLException e) {
+            throw new DatabaseException(
+                    "Nie udało się pobrać zadań, proszę spróbować ponownie później",
+                    ErrorCode.DB_ERROR
+            );
+        }
+    }
+
+    public List<Task> getAllTasks(Integer userId, Integer projectId) throws DatabaseException {
         try {
             String query;
             if (userId != -1) {
@@ -88,7 +115,73 @@ public class TaskModel extends ModelInterface {
             } else {
                 if (projectId != -1) statement.setInt(1, projectId);
             }
+            return getTasks(statement);
+        } catch (SQLException e) {
+            throw new DatabaseException(
+                    "Nie udało się pobrać zadań, proszę spróbować ponownie później",
+                    ErrorCode.DB_ERROR
+            );
+        }
+    }
 
+    public List<Task> getTasksForDate(Integer userId, Integer projectId, String date) throws DatabaseException {
+        try {
+            String query;
+            if (userId != -1) {
+                query = "SELECT t.id, t.name, t.done, t.due_date, t.project, t.note, t.created_at FROM Task t JOIN Project p on p.id = t.project WHERE t.due_date = ? AND p.user = ?";
+            } else {
+                query = "SELECT t.id, t.name, t.done, t.due_date, t.project, t.note, t.created_at FROM Task t JOIN Project p on p.id = t.project WHERE t.due_date = ? AND p.user is NULL";
+            }
+            if (projectId != -1) query = query + " AND p.id = ?";
+            query = query + " ORDER BY t.created_at DESC";
+            PreparedStatement statement = getConnection().prepareStatement(query);
+
+            statement.setString(1, date);
+            if (userId != -1) {
+                statement.setInt(2, userId);
+                if (projectId != -1) statement.setInt(3, projectId);
+            } else {
+                if (projectId != -1) statement.setInt(2, projectId);
+            }
+            return getTasks(statement);
+        } catch (SQLException e) {
+            throw new DatabaseException(
+                    "Nie udało się pobrać zadań, proszę spróbować ponownie później",
+                    ErrorCode.DB_ERROR
+            );
+        }
+    }
+
+    public List<Task> getUpcomingTasks(Integer userId, Integer projectId, String date) throws DatabaseException {
+        try {
+            String query;
+            if (userId != -1) {
+                query = "SELECT t.id, t.name, t.done, t.due_date, t.project, t.note, t.created_at FROM Task t JOIN Project p on p.id = t.project WHERE t.due_date >= date(?) AND p.user = ?";
+            } else {
+                query = "SELECT t.id, t.name, t.done, t.due_date, t.project, t.note, t.created_at FROM Task t JOIN Project p on p.id = t.project WHERE t.due_date >= date(?) AND p.user is NULL";
+            }
+            if (projectId != -1) query = query + " AND p.id = ?";
+            query = query + " ORDER BY t.created_at DESC";
+            PreparedStatement statement = getConnection().prepareStatement(query);
+
+            statement.setString(1, date);
+            if (userId != -1) {
+                statement.setInt(2, userId);
+                if (projectId != -1) statement.setInt(3, projectId);
+            } else {
+                if (projectId != -1) statement.setInt(2, projectId);
+            }
+            return getTasks(statement);
+        } catch (SQLException e) {
+            throw new DatabaseException(
+                    "Nie udało się pobrać zadań, proszę spróbować ponownie później",
+                    ErrorCode.DB_ERROR
+            );
+        }
+    }
+
+    public List<Task> getTasks(PreparedStatement statement) throws DatabaseException {
+        try {
             List<Task> tasks = new ArrayList<>();
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {

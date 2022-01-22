@@ -35,6 +35,7 @@ import javafx.util.StringConverter;
 
 import java.net.URL;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -42,10 +43,13 @@ public class MainController implements Initializable {
     private boolean opacityPaneState;
     private boolean drawerPaneState;
     private User user;
+    private enum View {ALL, TODAY, TOMORROW, UPCOMING, DONE};
+    private View currentView;
 
     @FXML
     private ImageView drawerImage, loginWindowClose, loginWindowClose2, closeSuccessAlertButton, closeErrorAlertButton,
-            addProjectButton1, submitAddTaskButton, deleteTask;
+            addProjectButton1, submitAddTaskButton, allTasksBtn, todayTasksBtn, tomorrowTasksBtn, upcomingTasksBtn,
+            doneTasksBtn;
 
     @FXML
     private AnchorPane mainPane, opacityPane, drawerPane, mainOpacityPane, signInPane, signUpPane, successAlertPane,
@@ -62,7 +66,8 @@ public class MainController implements Initializable {
     private Button loginPageButton, signOutButton, signInSubmitButton, openSignUpPane, backToSignInPane,
             signUpSubmitButton, addProjectButton2, submitAddProjectButton, hideAddProjectWindow,
             cancelEditTaskButton, submitEditTaskButton, submitEditProjectButton, cancelEditProjectButton,
-            removeProjectSubmitButton, removeTaskSubmitButton, removeProjectCancelButton, removeTaskCancelButton;
+            removeProjectSubmitButton, removeTaskSubmitButton, removeProjectCancelButton, removeTaskCancelButton,
+            taskList, allTasksView, todayTasksView, tomorrowTasksView, upcomingTasksView, doneTasksView;
 
     @FXML
     private TextField usernameSignInInput, passwordSignInInput, usernameSignUpInput, passwordSignUpInput,
@@ -123,6 +128,10 @@ public class MainController implements Initializable {
                         });
                     }
                 }
+
+                if (newTaskName.isFocused()) {
+                    taskList.requestFocus();
+                }
             }
         });
 
@@ -130,6 +139,7 @@ public class MainController implements Initializable {
             mainOpacityPaneClickHandler();
         });
 
+        setMenuItemsEvents();
         setSignInEvents();
         setSignUpEvents();
         setAlertEvents();
@@ -139,6 +149,47 @@ public class MainController implements Initializable {
         setAddTaskEvents();
         setEditTaskEvents();
         setRemoveTaskEvents();
+    }
+
+    private void setCurrentView(View currentView) {
+        if (currentView == View.ALL) { markActiveView(allTasksView); }
+        if (currentView == View.TODAY) { markActiveView(todayTasksView); }
+        if (currentView == View.TOMORROW) { markActiveView(tomorrowTasksView); }
+        if (currentView == View.UPCOMING) { markActiveView(upcomingTasksView); }
+        if (currentView == View.DONE) { markActiveView(doneTasksView); }
+    }
+
+    private HashMap<Button, View> getButtonViewHashMap() {
+        HashMap<Button, View> buttonViewHashMap = new HashMap<>();
+        buttonViewHashMap.put(allTasksView, View.ALL);
+        buttonViewHashMap.put(todayTasksView, View.TODAY);
+        buttonViewHashMap.put(tomorrowTasksView, View.TOMORROW);
+        buttonViewHashMap.put(upcomingTasksView, View.UPCOMING);
+        buttonViewHashMap.put(doneTasksView, View.DONE);
+        return buttonViewHashMap;
+    }
+
+    private void markActiveView(Button currentManuItem) {
+        HashMap<Button, View> buttonViewHashMap = getButtonViewHashMap();
+        currentView = buttonViewHashMap.get(currentManuItem);
+        Button[] menuItems = {allTasksView, todayTasksView, tomorrowTasksView, upcomingTasksView, doneTasksView};
+        for (Button menuItem : menuItems) { menuItem.setStyle("-fx-background-color: #fff"); }
+        currentManuItem.setStyle("-fx-background-color:  #f5f5f5");
+        fillTaskElements();
+    }
+
+    private void setMenuItemsEvents() {
+        setCurrentView(View.ALL);
+        allTasksView.setOnMouseClicked(event -> { setCurrentView(View.ALL); });
+        allTasksBtn.setOnMouseClicked(event -> { setCurrentView(View.ALL); });
+        todayTasksView.setOnMouseClicked(event -> { setCurrentView(View.TODAY); });
+        todayTasksBtn.setOnMouseClicked(event -> { setCurrentView(View.TODAY); });
+        tomorrowTasksView.setOnMouseClicked(event -> { setCurrentView(View.TOMORROW); });
+        tomorrowTasksBtn.setOnMouseClicked(event -> { setCurrentView(View.TOMORROW); });
+        upcomingTasksView.setOnMouseClicked(event -> { setCurrentView(View.UPCOMING); });
+        upcomingTasksBtn.setOnMouseClicked(event -> { setCurrentView(View.UPCOMING); });
+        doneTasksView.setOnMouseClicked(event -> { setCurrentView(View.DONE); });
+        doneTasksBtn.setOnMouseClicked(event -> { setCurrentView(View.DONE); });
     }
 
     private void setRemoveTaskEvents(){
@@ -243,11 +294,32 @@ public class MainController implements Initializable {
         List<Task> tasks;
         TaskModel taskModel = new TaskModel();
         Project selectedProject = newTaskSelectProject.getSelectionModel().getSelectedItem();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         List<String> errors = new ArrayList<>();
         try {
             Integer userId = user != null ? user.id : -1;
             Integer projectId = selectedProject != null ? selectedProject.getId() : -1;
-            tasks = taskModel.getTasks(userId, projectId);
+
+            if (currentView == View.TODAY) {
+                String date = dateFormat.format(new Date());
+                tasks = taskModel.getTasksForDate(userId, projectId, date);
+            } else if (currentView == View.TOMORROW) {
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTime(new Date());
+                calendar.add(Calendar.DATE, 1);
+                String date = dateFormat.format(calendar.getTime());
+                tasks = taskModel.getTasksForDate(userId, projectId, date);
+            } else if (currentView == View.UPCOMING) {
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTime(new Date());
+                calendar.add(Calendar.DATE, 2);
+                String date = dateFormat.format(calendar.getTime());
+                tasks = taskModel.getUpcomingTasks(userId, projectId, date);
+            } else if (currentView == View.DONE) {
+                tasks = taskModel.getDoneTasks(userId, projectId);
+            } else {
+                tasks = taskModel.getAllTasks(userId, projectId);
+            }
             doFillTasks(tasks);
         } catch (DatabaseException e) {
             errors.add(e.getMessage());

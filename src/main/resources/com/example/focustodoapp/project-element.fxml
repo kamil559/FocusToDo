@@ -6,7 +6,7 @@
 <?import javafx.scene.text.Font?>
 
 <fx:root maxHeight="25.0" maxWidth="179.0" minHeight="25.0" minWidth="179.0" prefHeight="25.0" prefWidth="179.0" style="-fx-background-color: #fff; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-view-order: 2;" styleClass="project-element" type="javafx.scene.layout.AnchorPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
-    <Label fx:id="projectName" prefHeight="21.0" prefWidth="142.0" style="-fx-padding: 0 3px 0 0;" textFill="#333333" AnchorPane.bottomAnchor="2.0" AnchorPane.leftAnchor="5.0" AnchorPane.rightAnchor="32.0" AnchorPane.topAnchor="2.0">
+    <Label fx:id="projectName" prefHeight="21.0" prefWidth="142.0" style="-fx-padding: 0 3px 0 0;" textFill="DARKGRAY" AnchorPane.bottomAnchor="2.0" AnchorPane.leftAnchor="5.0" AnchorPane.rightAnchor="32.0" AnchorPane.topAnchor="2.0">
         <font>
             <Font name="Ubuntu" size="15.0" />
         </font>
