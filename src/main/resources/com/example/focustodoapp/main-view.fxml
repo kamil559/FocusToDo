@@ -21,7 +21,7 @@
    <children>
       <AnchorPane maxHeight="46.0" minHeight="46.0" prefHeight="800.0" prefWidth="181.0" style="-fx-background-color: #ffffff; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 5, 0, 0, 0); -fx-view-order: 2;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
          <children>
-            <ImageView fx:id="drawerImage" fitHeight="32.0" fitWidth="32.0" layoutX="8.0" layoutY="11.0" pickOnBounds="true" preserveRatio="true">
+            <ImageView fx:id="drawerImage" fitHeight="32.0" fitWidth="32.0" layoutX="10.0" layoutY="9.0" pickOnBounds="true" preserveRatio="true" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="9.0">
                <image>
                   <Image url="@../../../images/menu-hamburger.png" />
                </image>
@@ -45,6 +45,14 @@
                   <Cursor fx:constant="CLOSED_HAND" />
                </cursor>
             </Button>
+            <ImageView fx:id="taskStatsBtn" accessibleText="Statystyki zadań" fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true" AnchorPane.bottomAnchor="5.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="9.0">
+               <image>
+                  <Image url="@../../../images/task-stats.png" />
+               </image>
+               <cursor>
+                  <Cursor fx:constant="CLOSED_HAND" />
+               </cursor>
+            </ImageView>
          </children></AnchorPane>
       <AnchorPane fx:id="menu_pane1" layoutY="46.0" prefHeight="500.0" prefWidth="44.0" style="-fx-background-color: #ffffff; -fx-view-order: 3;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="46.0">
          <children>
@@ -255,7 +263,7 @@
                   <Cursor fx:constant="CLOSED_HAND" />
                </cursor>
             </Button>
-            <AnchorPane prefHeight="200.0" prefWidth="179.0" style="-fx-border-color: #a9a9a9; -fx-border-width: 0 0 1px 0; -fx-view-order: 3; -fx-background-color: #fff;" AnchorPane.bottomAnchor="50.0">
+            <AnchorPane prefHeight="200.0" prefWidth="179.0" style="-fx-view-order: 3; -fx-background-color: #fff;" AnchorPane.bottomAnchor="50.0">
                <children>
                   <ScrollPane hbarPolicy="NEVER" minHeight="200.0" minWidth="179.0" prefHeight="200.0" prefWidth="179.0" style="-fx-background-color: #fff; -fx-font-size: 8px;" styleClass="project-list-scroll" AnchorPane.bottomAnchor="0.0" AnchorPane.topAnchor="0.0">
                      <content>
@@ -333,9 +341,9 @@
             </AnchorPane>
          </children>
       </StackPane>
-      <AnchorPane fx:id="MainPane" layoutX="43.0" layoutY="46.0" prefHeight="454.0" prefWidth="745.0" style="-fx-view-order: 5;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="43.0" AnchorPane.rightAnchor="-2.0" AnchorPane.topAnchor="46.0">
+      <AnchorPane fx:id="MainPane" layoutX="43.0" layoutY="46.0" prefHeight="454.0" prefWidth="745.0" style="-fx-view-order: 5;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="43.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="46.0">
          <children>
-            <AnchorPane layoutX="23.0" layoutY="50.0" prefHeight="40.0" prefWidth="715.0" style="-fx-background-color: #fff; -fx-border-radius: 5px; -fx-background-radius: 5px;">
+            <AnchorPane fx:id="addNewTaskPane" layoutX="23.0" layoutY="50.0" prefHeight="40.0" prefWidth="715.0" style="-fx-background-color: #fff; -fx-border-radius: 5px; -fx-background-radius: 5px;">
                <children>
                   <ImageView fx:id="submitAddTaskButton" fitHeight="24.0" fitWidth="26.0" layoutX="9.0" layoutY="8.0" pickOnBounds="true" preserveRatio="true" AnchorPane.bottomAnchor="8.0" AnchorPane.leftAnchor="9.0" AnchorPane.rightAnchor="681.0" AnchorPane.topAnchor="8.0">
                      <image>
@@ -356,7 +364,7 @@
                      </cursor></ComboBox>
                </children>
             </AnchorPane>
-            <Button fx:id="taskList" alignment="BASELINE_CENTER" layoutX="319.0" layoutY="5.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="124.0" style="-fx-background-color: transparent; -fx-border-color: transparent;" text="Zadania" AnchorPane.leftAnchor="319.0" AnchorPane.rightAnchor="317.0" AnchorPane.topAnchor="5.0">
+            <Button fx:id="mainPaneHeader" alignment="BASELINE_CENTER" layoutX="319.0" layoutY="14.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="124.0" style="-fx-background-color: transparent; -fx-border-color: transparent;" text="Zadania" AnchorPane.leftAnchor="318.0" AnchorPane.rightAnchor="318.0" AnchorPane.topAnchor="14.0">
                <font>
                   <Font name="Ubuntu Bold" size="18.0" />
                </font>
@@ -364,13 +372,26 @@
                   <Cursor fx:constant="DEFAULT" />
                </cursor>
             </Button>
-            <AnchorPane layoutX="23.0" layoutY="101.0" prefHeight="335.0" prefWidth="716.0" style="-fx-border-radius: 5px; -fx-background-radius: 5px;" AnchorPane.bottomAnchor="18.0" AnchorPane.leftAnchor="23.0" AnchorPane.rightAnchor="8.0" AnchorPane.topAnchor="101.0">
+            <AnchorPane fx:id="taskListPane" layoutX="23.0" layoutY="101.0" prefHeight="335.0" prefWidth="716.0" style="-fx-border-radius: 5px; -fx-background-radius: 5px;" AnchorPane.bottomAnchor="18.0" AnchorPane.leftAnchor="23.0" AnchorPane.rightAnchor="8.0" AnchorPane.topAnchor="101.0">
                <children>
                   <ScrollPane hbarPolicy="NEVER" minHeight="335.0" minWidth="716.0" prefHeight="335.0" prefWidth="729.0" style="-fx-background-color: transparent; -fx-font-size: 9px;" AnchorPane.bottomAnchor="0.0" AnchorPane.topAnchor="0.0">
                     <content>
                        <VBox fx:id="taskListVbox" prefWidth="716.0" spacing="10.0" />
                     </content>
                   </ScrollPane>
+               </children>
+            </AnchorPane>
+            <AnchorPane fx:id="taskStatsPane" layoutY="15.0" maxHeight="421.0" maxWidth="720.0" minHeight="386.0" minWidth="720.0" prefHeight="421.0" prefWidth="720.0" style="-fx-border-radius: 5px; -fx-background-radius: 5px; -fx-background-color: #fff;" AnchorPane.bottomAnchor="18.0" AnchorPane.leftAnchor="23.0" AnchorPane.rightAnchor="17.0" AnchorPane.topAnchor="15.0">
+               <children>
+                  <ImageView fx:id="exitTaskStatsPaneBtn" fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="5.0">
+                     <image>
+                        <Image url="@../../../images/login-close.png" />
+                     </image>
+                     <cursor>
+                        <Cursor fx:constant="CLOSED_HAND" />
+                     </cursor>
+                  </ImageView>
+                <AnchorPane fx:id="chartPlaceholder" layoutY="33.0" minHeight="0.0" minWidth="0.0" prefHeight="388.0" prefWidth="720.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="33.0" />
                </children>
             </AnchorPane>
          </children>

@@ -8,8 +8,9 @@ public class Task {
     private String note;
     private String createdAt;
     private Integer project;
+    private String doneAt;
 
-    public Task(int id, String name, Boolean done, String dueDate, Integer project, String note, String createdAt) {
+    public Task(int id, String name, Boolean done, String dueDate, Integer project, String note, String createdAt, String doneAt) {
         this.id = id;
         this.name = name;
         this.done = done;
@@ -17,6 +18,7 @@ public class Task {
         this.note = note;
         this.createdAt = createdAt;
         this.project = project;
+        this.doneAt = doneAt;
     }
 
     public int getId() {
@@ -46,4 +48,6 @@ public class Task {
     public Integer getProject() {
         return project;
     }
+
+    public String getDoneAt() { return doneAt; }
 }

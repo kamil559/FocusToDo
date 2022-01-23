@@ -9,7 +9,9 @@ import com.example.focustodoapp.errors.ValidationError;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -51,7 +53,6 @@ public class TaskModel extends ModelInterface {
         }
     }
 
-
     public void storeTask(String taskName, Project project) throws ValidationError, DatabaseException {
         checkTaskNameRequired(taskName);
         checkProjectRequired(project, true);
@@ -70,24 +71,32 @@ public class TaskModel extends ModelInterface {
         }
     }
 
-    public List<Task> getDoneTasks(Integer userId, Integer projectId) throws DatabaseException {
+    public List<Task> getTasksByDoneStatus(Integer userId, Integer projectId, Integer done)
+            throws DatabaseException {
         try {
             String query;
             if (userId != -1) {
-                query = "SELECT t.id, t.name, t.done, t.due_date, t.project, t.note, t.created_at FROM Task t JOIN Project p on p.id = t.project WHERE t.done = 1 AND p.user = ?";
+                query = "SELECT t.id, t.name, t.done, t.due_date, t.project, t.note, t.created_at, t.done_at " +
+                        "FROM Task t JOIN Project p on p.id = t.project WHERE t.done = ? AND p.user = ?";
             } else {
-                query = "SELECT t.id, t.name, t.done, t.due_date, t.project, t.note, t.created_at FROM Task t JOIN Project p on p.id = t.project WHERE t.done = 1 AND p.user is NULL";
+                query = "SELECT t.id, t.name, t.done, t.due_date, t.project, t.note, t.created_at, t.done_at " +
+                        "FROM Task t JOIN Project p on p.id = t.project WHERE t.done = ? AND p.user is NULL";
             }
             if (projectId != -1) query = query + " AND p.id = ?";
             query = query + " ORDER BY t.created_at DESC";
             PreparedStatement statement = getConnection().prepareStatement(query);
 
             if (userId != -1) {
-                statement.setInt(1, userId);
-                if (projectId != -1) statement.setInt(2, projectId);
+                statement.setInt(1, done);
+                statement.setInt(2, userId);
+                if (projectId != -1) statement.setInt(3, projectId);
             } else {
-                if (projectId != -1) statement.setInt(1, projectId);
+                statement.setInt(1, done);
+                if (projectId != -1) {
+                    statement.setInt(2, projectId);
+                }
             }
+
             return getTasks(statement);
         } catch (SQLException e) {
             throw new DatabaseException(
@@ -101,9 +110,9 @@ public class TaskModel extends ModelInterface {
         try {
             String query;
             if (userId != -1) {
-                query = "SELECT t.id, t.name, t.done, t.due_date, t.project, t.note, t.created_at FROM Task t JOIN Project p on p.id = t.project WHERE p.user = ?";
+                query = "SELECT t.id, t.name, t.done, t.due_date, t.project, t.note, t.created_at, t.done_at FROM Task t JOIN Project p on p.id = t.project WHERE p.user = ?";
             } else {
-                query = "SELECT t.id, t.name, t.done, t.due_date, t.project, t.note, t.created_at FROM Task t JOIN Project p on p.id = t.project WHERE p.user is NULL";
+                query = "SELECT t.id, t.name, t.done, t.due_date, t.project, t.note, t.created_at, t.done_at FROM Task t JOIN Project p on p.id = t.project WHERE p.user is NULL";
             }
             if (projectId != -1) query = query + " AND p.id = ?";
             query = query + " ORDER BY t.created_at DESC";
@@ -128,9 +137,9 @@ public class TaskModel extends ModelInterface {
         try {
             String query;
             if (userId != -1) {
-                query = "SELECT t.id, t.name, t.done, t.due_date, t.project, t.note, t.created_at FROM Task t JOIN Project p on p.id = t.project WHERE t.due_date = ? AND p.user = ?";
+                query = "SELECT t.id, t.name, t.done, t.due_date, t.project, t.note, t.created_at, t.done_at FROM Task t JOIN Project p on p.id = t.project WHERE t.due_date = ? AND p.user = ?";
             } else {
-                query = "SELECT t.id, t.name, t.done, t.due_date, t.project, t.note, t.created_at FROM Task t JOIN Project p on p.id = t.project WHERE t.due_date = ? AND p.user is NULL";
+                query = "SELECT t.id, t.name, t.done, t.due_date, t.project, t.note, t.created_at, t.done_at FROM Task t JOIN Project p on p.id = t.project WHERE t.due_date = ? AND p.user is NULL";
             }
             if (projectId != -1) query = query + " AND p.id = ?";
             query = query + " ORDER BY t.created_at DESC";
@@ -156,9 +165,9 @@ public class TaskModel extends ModelInterface {
         try {
             String query;
             if (userId != -1) {
-                query = "SELECT t.id, t.name, t.done, t.due_date, t.project, t.note, t.created_at FROM Task t JOIN Project p on p.id = t.project WHERE t.due_date >= date(?) AND p.user = ?";
+                query = "SELECT t.id, t.name, t.done, t.due_date, t.project, t.note, t.created_at, t.done_at FROM Task t JOIN Project p on p.id = t.project WHERE t.due_date >= date(?) AND p.user = ?";
             } else {
-                query = "SELECT t.id, t.name, t.done, t.due_date, t.project, t.note, t.created_at FROM Task t JOIN Project p on p.id = t.project WHERE t.due_date >= date(?) AND p.user is NULL";
+                query = "SELECT t.id, t.name, t.done, t.due_date, t.project, t.note, t.created_at, t.done_at FROM Task t JOIN Project p on p.id = t.project WHERE t.due_date >= date(?) AND p.user is NULL";
             }
             if (projectId != -1) query = query + " AND p.id = ?";
             query = query + " ORDER BY t.created_at DESC";
@@ -193,7 +202,8 @@ public class TaskModel extends ModelInterface {
                         resultSet.getString(4),
                             resultSet.getInt(5),
                             resultSet.getString(6),
-                            resultSet.getString(7)
+                            resultSet.getString(7),
+                            resultSet.getString(8)
                     )
                 );
             }
@@ -213,11 +223,18 @@ public class TaskModel extends ModelInterface {
 
     public void updateDone(Integer taskId, Integer newDoneValue) throws ValidationError, DatabaseException {
         validateDoneValue(newDoneValue);
-        String query = "UPDATE Task SET done = ? WHERE id = ?";
+        String query = "UPDATE Task SET done = ?, done_at = ? WHERE id = ?";
         try {
             PreparedStatement statement = getConnection().prepareStatement(query);
             statement.setInt(1, newDoneValue);
-            statement.setInt(2, taskId);
+            if (newDoneValue == 1) {
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                statement.setString(2, dateFormat.format(new Date()));
+            } else {
+                statement.setString(2, null);
+            }
+
+            statement.setInt(3, taskId);
             statement.executeUpdate();
             closeConnection();
         } catch (SQLException e) {

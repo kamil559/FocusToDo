@@ -22,6 +22,10 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.LineChart;;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -35,6 +39,7 @@ import javafx.util.StringConverter;
 
 import java.net.URL;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.*;
@@ -42,18 +47,20 @@ import java.util.*;
 public class MainController implements Initializable {
     private boolean opacityPaneState;
     private boolean drawerPaneState;
+    private boolean taskStatsPaneState;
     private User user;
     private enum View {ALL, TODAY, TOMORROW, UPCOMING, DONE};
     private View currentView;
+    private LineChart<String, Number> tasksLineChart;
 
     @FXML
     private ImageView drawerImage, loginWindowClose, loginWindowClose2, closeSuccessAlertButton, closeErrorAlertButton,
             addProjectButton1, submitAddTaskButton, allTasksBtn, todayTasksBtn, tomorrowTasksBtn, upcomingTasksBtn,
-            doneTasksBtn;
+            doneTasksBtn, taskStatsBtn, exitTaskStatsPaneBtn;
 
     @FXML
     private AnchorPane mainPane, opacityPane, drawerPane, mainOpacityPane, signInPane, signUpPane, successAlertPane,
-            errorAlertPane;
+            errorAlertPane, addNewTaskPane, taskListPane, taskStatsPane, chartPlaceholder;
 
     @FXML
     private StackPane loginWindow, addProjectWindow, editTaskWindow, editProjectWindow, removeProjectPrompt,
@@ -64,10 +71,10 @@ public class MainController implements Initializable {
 
     @FXML
     private Button loginPageButton, signOutButton, signInSubmitButton, openSignUpPane, backToSignInPane,
-            signUpSubmitButton, addProjectButton2, submitAddProjectButton, hideAddProjectWindow,
+            signUpSubmitButton, addProjectButton2, submitAddProjectButton, hideAddProjectWindow, mainPaneHeader,
             cancelEditTaskButton, submitEditTaskButton, submitEditProjectButton, cancelEditProjectButton,
             removeProjectSubmitButton, removeTaskSubmitButton, removeProjectCancelButton, removeTaskCancelButton,
-            taskList, allTasksView, todayTasksView, tomorrowTasksView, upcomingTasksView, doneTasksView;
+            allTasksView, todayTasksView, tomorrowTasksView, upcomingTasksView, doneTasksView;
 
     @FXML
     private TextField usernameSignInInput, passwordSignInInput, usernameSignUpInput, passwordSignUpInput,
@@ -117,8 +124,10 @@ public class MainController implements Initializable {
                         hideProjectEditWindow();
                     } else if (removeProjectPrompt.isVisible()) {
                         hideDeleteProjectPrompt();
-                    }  else if (removeTaskPrompt.isVisible()) {
+                    } else if (removeTaskPrompt.isVisible()) {
                         hideDeleteTaskPrompt();
+                    } else if (taskStatsPaneState) {
+                        hideTaskStatsPane(false);
                     } else if (drawerPaneState) {
                         hideDrawer();
                         FadeTransition fadeTransition = hideOpacity(opacityPane);
@@ -130,7 +139,7 @@ public class MainController implements Initializable {
                 }
 
                 if (newTaskName.isFocused()) {
-                    taskList.requestFocus();
+                    taskListPane.requestFocus();
                 }
             }
         });
@@ -140,6 +149,7 @@ public class MainController implements Initializable {
         });
 
         setMenuItemsEvents();
+        setStatsPaneEvents();
         setSignInEvents();
         setSignUpEvents();
         setAlertEvents();
@@ -179,6 +189,7 @@ public class MainController implements Initializable {
     }
 
     private void setMenuItemsEvents() {
+        drawerPane.setVisible(true);
         setCurrentView(View.ALL);
         allTasksView.setOnMouseClicked(event -> { setCurrentView(View.ALL); });
         allTasksBtn.setOnMouseClicked(event -> { setCurrentView(View.ALL); });
@@ -190,6 +201,181 @@ public class MainController implements Initializable {
         upcomingTasksBtn.setOnMouseClicked(event -> { setCurrentView(View.UPCOMING); });
         doneTasksView.setOnMouseClicked(event -> { setCurrentView(View.DONE); });
         doneTasksBtn.setOnMouseClicked(event -> { setCurrentView(View.DONE); });
+    }
+
+    private void setStatsPaneEvents() {
+        TranslateTransition translateTransition = new TranslateTransition(Duration.seconds(0.3), taskStatsPane);
+        translateTransition.setByX(+800);
+        translateTransition.play();
+        translateTransition.setOnFinished(event -> {
+            taskStatsPane.setVisible(true);
+        });
+
+        Tooltip.install(taskStatsBtn, new Tooltip("Kliknij, aby wyświetlić statystyki zadań"));
+        taskStatsBtn.setOnMouseClicked(event -> {
+            if (taskStatsPaneState) {
+                hideTaskStatsPane(false);
+            } else {
+                showTaskStatsPane();
+            }
+        });
+        exitTaskStatsPaneBtn.setOnMouseClicked(event -> {
+            hideTaskStatsPane(false);
+        });
+    }
+
+    private List<Task> getDoneTasks() {
+        List<Task> tasks;
+        TaskModel taskModel = new TaskModel();
+        List<String> errors = new ArrayList<>();
+
+        try {
+            Integer userId = user != null ? user.id : -1;
+            tasks = taskModel.getTasksByDoneStatus(userId, -1, 1);
+            return tasks;
+        } catch (DatabaseException e) {
+            errors.add(e.getMessage());
+        } finally {
+            if (!errors.isEmpty()) {
+                String joinedErrors = String.join("\n", errors);
+                showErrorAlert(joinedErrors, 10);
+            }
+        }
+        return new ArrayList<>();
+    }
+
+    private Map<String, List<Integer>> prepareSeriesData(String dateFromString) throws ParseException {
+        Map<String, List<Integer>> tasksSeriesData = new TreeMap<>();
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+        String dateToString = formatter.format(new Date());
+        Date dateFrom = formatter.parse(dateFromString);
+        Date dateTo = formatter.parse(dateToString);
+
+        Calendar calendar = new GregorianCalendar();
+        calendar.setTime(dateFrom);
+
+        Calendar tomorrowCalendar = new GregorianCalendar();
+        tomorrowCalendar.setTime(dateTo);
+        tomorrowCalendar.add(Calendar.DATE, 1);
+        Date beforeDate = tomorrowCalendar.getTime();
+
+        while (calendar.getTime().before(beforeDate)) {
+            Date result = calendar.getTime();
+            tasksSeriesData.put(formatter.format(result), new ArrayList<>());
+            calendar.add(Calendar.DATE, 1);
+        }
+        return tasksSeriesData;
+    }
+
+    private Map<String, Integer> getDailyDoneTasks() throws ParseException {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+        List<Task> doneTasks = getDoneTasks();
+        String fromDateString;
+
+        if (doneTasks.size() > 0) {
+            fromDateString = doneTasks.get(doneTasks.size() - 1).getCreatedAt();
+        } else {
+            fromDateString = formatter.format(new Date());
+        }
+        Map<String, List<Integer>> doneTasksSeriesData = prepareSeriesData(fromDateString);
+        Map<String, Integer> dailyDoneTasksCountedSeriesData = new TreeMap<>();
+
+        for (Task task : doneTasks) {
+            String taskDate = formatter.format(formatter.parse(task.getDoneAt()));
+            doneTasksSeriesData.get(taskDate).add(task.getId());
+        }
+        doneTasksSeriesData.forEach((key, values) -> {
+            dailyDoneTasksCountedSeriesData.put(key, values.size());
+        });
+        return dailyDoneTasksCountedSeriesData;
+    }
+
+    private Map<String, Integer> getDailyNewTasks() throws ParseException {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+        List<Task> newTasks = getTaskList();
+        String fromDateString;
+        if (newTasks.size() > 0) {
+            fromDateString = newTasks.get(newTasks.size() - 1).getCreatedAt();
+        } else {
+            fromDateString = formatter.format(new Date());
+        }
+        Map<String, List<Integer>> newTasksSeriesData = prepareSeriesData(fromDateString);
+        Map<String, Integer> dailyNewTasksCountedSeriesData = new TreeMap<>();
+
+        for (Task task : newTasks) {
+            String taskDate = formatter.format(formatter.parse(task.getCreatedAt()));
+            newTasksSeriesData.get(taskDate).add(task.getId());
+        }
+        newTasksSeriesData.forEach((key, values) -> {
+            dailyNewTasksCountedSeriesData.put(key, values.size());
+        });
+        return dailyNewTasksCountedSeriesData;
+    }
+
+    private void loadStatsGraph() throws ParseException {
+        if (tasksLineChart != null) {
+            chartPlaceholder.getChildren().remove(tasksLineChart);
+        }
+
+        XYChart.Series<String, Number> newTasksSeries = new XYChart.Series<>();
+        XYChart.Series<String, Number> doneTasksSeries = new XYChart.Series<>();
+        final CategoryAxis xAxis = new CategoryAxis();
+        final NumberAxis yAxis = new NumberAxis();
+        tasksLineChart = new LineChart<>(xAxis,yAxis);
+        tasksLineChart.setId("tasksLineChart");
+        yAxis.setLabel("Liczba zadań");
+        xAxis.setLabel("Dzień");
+        newTasksSeries.setName("Nowe zadania");
+        doneTasksSeries.setName("Ukończone zadania");
+
+        Map<String, Integer> dailyDoneTasks = getDailyDoneTasks();
+        Map<String, Integer> dailyUndoneTasks = getDailyNewTasks();
+        dailyDoneTasks.forEach((doneAt, tasksCount) -> {
+            doneTasksSeries.getData().add(new XYChart.Data<>(doneAt, tasksCount));
+        });
+        dailyUndoneTasks.forEach((createdAt, tasksCount) -> {
+            newTasksSeries.getData().add(new XYChart.Data<>(createdAt, tasksCount));
+        });
+        AnchorPane.setTopAnchor(tasksLineChart, 0.0);
+        AnchorPane.setBottomAnchor(tasksLineChart, 10.0);
+        AnchorPane.setLeftAnchor(tasksLineChart, 10.0);
+        AnchorPane.setRightAnchor(tasksLineChart, 10.0);
+        tasksLineChart.getData().add(newTasksSeries);
+        tasksLineChart.getData().add(doneTasksSeries);
+        chartPlaceholder.getChildren().add(tasksLineChart);
+    }
+
+    private void showTaskStatsPane() {
+        try {
+            loadStatsGraph();
+        } catch (ParseException e) {
+            showErrorAlert("Nie udało się pobrać danych statystycznych");
+        }
+
+        TranslateTransition translateTransition = new TranslateTransition(Duration.seconds(0.3), taskStatsPane);
+        translateTransition.setByX(-800);
+        translateTransition.play();
+        translateTransition.setOnFinished(event -> {
+            addNewTaskPane.setVisible(false);
+            mainPaneHeader.setVisible(false);
+            taskListPane.setVisible(false);
+        });
+
+        taskStatsPaneState = true;
+    }
+
+    private void hideTaskStatsPane(Boolean immediately) {
+        if (immediately) {
+            taskStatsPane.setVisible(false);
+        } else {
+            TranslateTransition translateTransition = new TranslateTransition(Duration.seconds(0.3), taskStatsPane);
+            translateTransition.setByX(+800);
+            translateTransition.play();
+        }
+        mainPaneHeader.setVisible(true);
+        taskListPane.setVisible(true);
+        addNewTaskPane.setVisible(true);
+        taskStatsPaneState = false;
     }
 
     private void setRemoveTaskEvents(){
@@ -290,16 +476,34 @@ public class MainController implements Initializable {
         }
     }
 
-    public void fillTaskElements() {
-        List<Task> tasks;
+    public List<Task> getTaskList() {
         TaskModel taskModel = new TaskModel();
         Project selectedProject = newTaskSelectProject.getSelectionModel().getSelectedItem();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         List<String> errors = new ArrayList<>();
         try {
             Integer userId = user != null ? user.id : -1;
             Integer projectId = selectedProject != null ? selectedProject.getId() : -1;
+            return taskModel.getAllTasks(userId, projectId);
+        } catch (DatabaseException e) {
+            errors.add(e.getMessage());
+        } finally {
+            if (!errors.isEmpty()) {
+                String joinedErrors = String.join("\n", errors);
+                showErrorAlert(joinedErrors, 10);
+            }
+        }
+        return new ArrayList<>();
+    }
 
+    public void fillTaskElements() {
+        List<Task> tasks;
+        Project selectedProject = newTaskSelectProject.getSelectionModel().getSelectedItem();
+        Integer userId = user != null ? user.id : -1;
+        Integer projectId = selectedProject != null ? selectedProject.getId() : -1;
+        TaskModel taskModel = new TaskModel();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        List<String> errors = new ArrayList<>();
+        try {
             if (currentView == View.TODAY) {
                 String date = dateFormat.format(new Date());
                 tasks = taskModel.getTasksForDate(userId, projectId, date);
@@ -316,9 +520,9 @@ public class MainController implements Initializable {
                 String date = dateFormat.format(calendar.getTime());
                 tasks = taskModel.getUpcomingTasks(userId, projectId, date);
             } else if (currentView == View.DONE) {
-                tasks = taskModel.getDoneTasks(userId, projectId);
+                tasks = taskModel.getTasksByDoneStatus(userId, projectId, 1);
             } else {
-                tasks = taskModel.getAllTasks(userId, projectId);
+                tasks = getTaskList();
             }
             doFillTasks(tasks);
         } catch (DatabaseException e) {
