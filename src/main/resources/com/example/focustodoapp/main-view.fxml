@@ -54,7 +54,7 @@
                </cursor>
             </ImageView>
          </children></AnchorPane>
-      <AnchorPane fx:id="menu_pane1" layoutY="46.0" prefHeight="500.0" prefWidth="44.0" style="-fx-background-color: #ffffff; -fx-view-order: 3;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="46.0">
+      <AnchorPane fx:id="menu_pane1" layoutY="46.0" prefHeight="500.0" prefWidth="44.0" style="-fx-background-color: #ffffff; -fx-view-order: 3; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 4, 0, 0, 0);" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="46.0">
          <children>
             <VBox alignment="TOP_CENTER" prefHeight="225.0" prefWidth="44.0" spacing="16.0" AnchorPane.topAnchor="20.0">
                <children>
@@ -263,11 +263,11 @@
                   <Cursor fx:constant="CLOSED_HAND" />
                </cursor>
             </Button>
-            <AnchorPane prefHeight="200.0" prefWidth="179.0" style="-fx-view-order: 3; -fx-background-color: #fff;" AnchorPane.bottomAnchor="50.0">
+            <AnchorPane maxWidth="177.0" prefHeight="200.0" prefWidth="177.0" style="-fx-view-order: 3; -fx-background-color: #fff;" AnchorPane.bottomAnchor="50.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
                <children>
-                  <ScrollPane hbarPolicy="NEVER" minHeight="200.0" minWidth="179.0" prefHeight="200.0" prefWidth="179.0" style="-fx-background-color: #fff; -fx-font-size: 8px;" styleClass="project-list-scroll" AnchorPane.bottomAnchor="0.0" AnchorPane.topAnchor="0.0">
+                  <ScrollPane hbarPolicy="NEVER" style="-fx-background-color: #fff; -fx-font-size: 8px;" styleClass="project-list-scroll" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="3.0" AnchorPane.rightAnchor="3.0" AnchorPane.topAnchor="0.0">
                      <content>
-                        <VBox fx:id="projectListVbox" prefWidth="179.0" spacing="2.0" style="-fx-background-color: #fff;" />
+                        <VBox fx:id="projectListVbox" spacing="2.0" style="-fx-background-color: #fff;" />
                      </content>
                   </ScrollPane>
                </children>

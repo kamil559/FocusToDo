@@ -43,6 +43,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class MainController implements Initializable {
     private boolean opacityPaneState;
@@ -92,24 +93,27 @@ public class MainController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        setOpacityPanesEvents();
+        setMainPaneEvents();
+        setMenuItemsEvents();
+        setStatsPaneEvents();
+        setLoginWindowEvents();
+        setAlertEvents();
+        setProjectEvents();
+        setTaskEvents();
+    }
+
+    private void setOpacityPanesEvents() {
         opacityPaneState = false;
-        drawerPaneState = false;
         mainOpacityPane.setVisible(false);
-        loginWindow.setVisible(false);
         initOpacityPane();
-
-        TranslateTransition translateTransition = new TranslateTransition(Duration.seconds(0.3), drawerPane);
-        translateTransition.setByX(-600);
-        translateTransition.play();
-
-        drawerImage.setOnMouseClicked(event -> {
-            drawerImageClickHandler();
-        });
 
         opacityPane.setOnMouseClicked(event -> {
             opacityPaneClickHandler();
         });
+    }
 
+    private void setMainPaneEvents() {
         mainPane.setOnKeyPressed(new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent keyEvent) {
@@ -147,49 +151,17 @@ public class MainController implements Initializable {
         mainOpacityPane.setOnMouseClicked(event -> {
             mainOpacityPaneClickHandler();
         });
-
-        setMenuItemsEvents();
-        setStatsPaneEvents();
-        setSignInEvents();
-        setSignUpEvents();
-        setAlertEvents();
-        setAddProjectEvents();
-        setEditProjectEvents();
-        setRemoveProjectEvents();
-        setAddTaskEvents();
-        setEditTaskEvents();
-        setRemoveTaskEvents();
-    }
-
-    private void setCurrentView(View currentView) {
-        if (currentView == View.ALL) { markActiveView(allTasksView); }
-        if (currentView == View.TODAY) { markActiveView(todayTasksView); }
-        if (currentView == View.TOMORROW) { markActiveView(tomorrowTasksView); }
-        if (currentView == View.UPCOMING) { markActiveView(upcomingTasksView); }
-        if (currentView == View.DONE) { markActiveView(doneTasksView); }
-    }
-
-    private HashMap<Button, View> getButtonViewHashMap() {
-        HashMap<Button, View> buttonViewHashMap = new HashMap<>();
-        buttonViewHashMap.put(allTasksView, View.ALL);
-        buttonViewHashMap.put(todayTasksView, View.TODAY);
-        buttonViewHashMap.put(tomorrowTasksView, View.TOMORROW);
-        buttonViewHashMap.put(upcomingTasksView, View.UPCOMING);
-        buttonViewHashMap.put(doneTasksView, View.DONE);
-        return buttonViewHashMap;
-    }
-
-    private void markActiveView(Button currentManuItem) {
-        HashMap<Button, View> buttonViewHashMap = getButtonViewHashMap();
-        currentView = buttonViewHashMap.get(currentManuItem);
-        Button[] menuItems = {allTasksView, todayTasksView, tomorrowTasksView, upcomingTasksView, doneTasksView};
-        for (Button menuItem : menuItems) { menuItem.setStyle("-fx-background-color: #fff"); }
-        currentManuItem.setStyle("-fx-background-color:  #f5f5f5");
-        fillTaskElements();
     }
 
     private void setMenuItemsEvents() {
+        drawerPaneState = false;
+        TranslateTransition translateTransition = new TranslateTransition(Duration.seconds(0.3), drawerPane);
+        translateTransition.setByX(-600);
+        translateTransition.play();
         drawerPane.setVisible(true);
+        drawerImage.setOnMouseClicked(event -> {
+            drawerImageClickHandler();
+        });
         setCurrentView(View.ALL);
         allTasksView.setOnMouseClicked(event -> { setCurrentView(View.ALL); });
         allTasksBtn.setOnMouseClicked(event -> { setCurrentView(View.ALL); });
@@ -222,6 +194,60 @@ public class MainController implements Initializable {
         exitTaskStatsPaneBtn.setOnMouseClicked(event -> {
             hideTaskStatsPane(false);
         });
+    }
+
+    private void setLoginWindowEvents () {
+        loginWindow.setVisible(false);
+        setSignInEvents();
+        setSignUpEvents();
+    }
+
+    private void setAlertEvents() {
+        closeSuccessAlertButton.setOnMouseClicked(event -> {
+            hideSuccessAlert();
+        });
+        closeErrorAlertButton.setOnMouseClicked(event -> {
+            hideErrorAlert();
+        });
+    }
+
+    private void setProjectEvents() {
+        setAddProjectEvents();
+        setEditProjectEvents();
+        setRemoveProjectEvents();
+    }
+
+    private void setTaskEvents() {
+        setAddTaskEvents();
+        setEditTaskEvents();
+        setRemoveTaskEvents();
+    }
+
+    private void setCurrentView(View currentView) {
+        if (currentView == View.ALL) { markActiveView(allTasksView); }
+        if (currentView == View.TODAY) { markActiveView(todayTasksView); }
+        if (currentView == View.TOMORROW) { markActiveView(tomorrowTasksView); }
+        if (currentView == View.UPCOMING) { markActiveView(upcomingTasksView); }
+        if (currentView == View.DONE) { markActiveView(doneTasksView); }
+    }
+
+    private HashMap<Button, View> getButtonViewHashMap() {
+        HashMap<Button, View> buttonViewHashMap = new HashMap<>();
+        buttonViewHashMap.put(allTasksView, View.ALL);
+        buttonViewHashMap.put(todayTasksView, View.TODAY);
+        buttonViewHashMap.put(tomorrowTasksView, View.TOMORROW);
+        buttonViewHashMap.put(upcomingTasksView, View.UPCOMING);
+        buttonViewHashMap.put(doneTasksView, View.DONE);
+        return buttonViewHashMap;
+    }
+
+    private void markActiveView(Button currentManuItem) {
+        HashMap<Button, View> buttonViewHashMap = getButtonViewHashMap();
+        currentView = buttonViewHashMap.get(currentManuItem);
+        Button[] menuItems = {allTasksView, todayTasksView, tomorrowTasksView, upcomingTasksView, doneTasksView};
+        for (Button menuItem : menuItems) { menuItem.setStyle("-fx-background-color: #fff"); }
+        currentManuItem.setStyle("-fx-background-color:  #f5f5f5");
+        fillTaskElements();
     }
 
     private List<Task> getDoneTasks() {
@@ -292,7 +318,7 @@ public class MainController implements Initializable {
 
     private Map<String, Integer> getDailyNewTasks() throws ParseException {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
-        List<Task> newTasks = getTaskList();
+        List<Task> newTasks = getTaskList(true);
         String fromDateString;
         if (newTasks.size() > 0) {
             fromDateString = newTasks.get(newTasks.size() - 1).getCreatedAt();
@@ -329,13 +355,22 @@ public class MainController implements Initializable {
         doneTasksSeries.setName("Ukończone zadania");
 
         Map<String, Integer> dailyDoneTasks = getDailyDoneTasks();
-        Map<String, Integer> dailyUndoneTasks = getDailyNewTasks();
+        Map<String, Integer> dailyNewTasks = getDailyNewTasks();
         dailyDoneTasks.forEach((doneAt, tasksCount) -> {
             doneTasksSeries.getData().add(new XYChart.Data<>(doneAt, tasksCount));
         });
-        dailyUndoneTasks.forEach((createdAt, tasksCount) -> {
+        dailyNewTasks.forEach((createdAt, tasksCount) -> {
             newTasksSeries.getData().add(new XYChart.Data<>(createdAt, tasksCount));
         });
+        List<Integer> tasksCount = new ArrayList<>(dailyNewTasks.values());  // yAxis upper limit
+        int topTasksCount = tasksCount.stream().reduce(Integer.MIN_VALUE, Integer::max);
+        int nearestRoundUpperBound = (topTasksCount + 5) - (topTasksCount % 5);
+        yAxis.setAutoRanging(false);
+        yAxis.setLowerBound(0);
+        yAxis.setUpperBound(nearestRoundUpperBound);
+        yAxis.setTickUnit(1);
+        yAxis.setMinorTickVisible(false);
+
         AnchorPane.setTopAnchor(tasksLineChart, 0.0);
         AnchorPane.setBottomAnchor(tasksLineChart, 10.0);
         AnchorPane.setLeftAnchor(tasksLineChart, 10.0);
@@ -476,13 +511,13 @@ public class MainController implements Initializable {
         }
     }
 
-    public List<Task> getTaskList() {
+    public List<Task> getTaskList(Boolean ignoreProject) {
         TaskModel taskModel = new TaskModel();
         Project selectedProject = newTaskSelectProject.getSelectionModel().getSelectedItem();
         List<String> errors = new ArrayList<>();
         try {
             Integer userId = user != null ? user.id : -1;
-            Integer projectId = selectedProject != null ? selectedProject.getId() : -1;
+            Integer projectId = selectedProject != null && !ignoreProject ? selectedProject.getId() : -1;
             return taskModel.getAllTasks(userId, projectId);
         } catch (DatabaseException e) {
             errors.add(e.getMessage());
@@ -522,7 +557,7 @@ public class MainController implements Initializable {
             } else if (currentView == View.DONE) {
                 tasks = taskModel.getTasksByDoneStatus(userId, projectId, 1);
             } else {
-                tasks = getTaskList();
+                tasks = getTaskList(false);
             }
             doFillTasks(tasks);
         } catch (DatabaseException e) {
@@ -741,6 +776,8 @@ public class MainController implements Initializable {
             }
             showSuccessAlert("Pomyślnie dodano projekt", 5);
             fillProjectComboBoxOptions(newTaskSelectProject);
+            fillProjectComboBoxOptions(editTaskProject);
+            fillProjectElements();
             hideAddProjectWindow();
         } catch (DatabaseException | ValidationError e) {
             errors.add(e.getMessage());
@@ -967,15 +1004,6 @@ public class MainController implements Initializable {
                     projectEditSaveHandler();
                 }
             }
-        });
-    }
-
-    private void setAlertEvents() {
-        closeSuccessAlertButton.setOnMouseClicked(event -> {
-            hideSuccessAlert();
-        });
-        closeErrorAlertButton.setOnMouseClicked(event -> {
-            hideErrorAlert();
         });
     }
 
