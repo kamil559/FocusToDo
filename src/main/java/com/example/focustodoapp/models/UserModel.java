@@ -80,11 +80,16 @@ public class UserModel extends ModelInterface {
             PreparedStatement statement = getConnection().prepareStatement(query);
             statement.setString(1, username);
             ResultSet resultSet = statement.executeQuery();
-            AuthUser authUser = new AuthUser(
-                    resultSet.getInt(1),
-                    resultSet.getString(2),
-                    resultSet.getString(3)
-            );
+            AuthUser authUser;
+            if (resultSet.next()) {
+                authUser = new AuthUser(
+                        resultSet.getInt(1),
+                        resultSet.getString(2),
+                        resultSet.getString(3)
+                );
+            } else {
+                authUser = null;
+            }
             closeConnection();
             return authUser;
         } catch (SQLException e) {
@@ -148,6 +153,10 @@ public class UserModel extends ModelInterface {
         if (Objects.equals(password, "")) throw new ValidationError("Hasło jest wymagane");
     }
 
+    private void checkUserExists(AuthUser user) throws AuthenticationError {
+        if (user == null) throw new AuthenticationError("Użytkownik o podanym loginie nie istnieje");
+    }
+
     public void storeUser(String username, String password) throws DatabaseException, ValidationError {
         checkUsernameRequired(username);
         checkPasswordRequired(password);
@@ -174,6 +183,7 @@ public class UserModel extends ModelInterface {
         checkUsernameRequired(username);
         checkPasswordRequired(passwordCandidate);
         AuthUser user = getAuthUser(username);
+        checkUserExists(user);
         checkPasswordMatchesUser(user, passwordCandidate);
         return getUser(user.id);
     }

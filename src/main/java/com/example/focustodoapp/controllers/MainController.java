@@ -43,7 +43,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class MainController implements Initializable {
     private boolean opacityPaneState;
@@ -821,6 +820,8 @@ public class MainController implements Initializable {
             userModel.storeUser(username, password);
             showSuccessAlert("Pomyślnie utworzono użytkownika", 5);
             showSignInPane();
+            usernameSignInInput.setText(username);
+            passwordSignInInput.requestFocus();
         } catch (DatabaseException | ValidationError e) {
             errors.add(e.getMessage());
         } finally {
