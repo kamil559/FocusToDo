@@ -21,9 +21,8 @@ import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-
 import javafx.scene.chart.CategoryAxis;
-import javafx.scene.chart.LineChart;;
+import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
@@ -42,15 +41,23 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.Month;
+import java.time.format.TextStyle;
 import java.util.*;
+
+;
 
 public class MainController implements Initializable {
     private boolean opacityPaneState;
     private boolean drawerPaneState;
     private boolean taskStatsPaneState;
     private User user;
-    private enum View {ALL, TODAY, TOMORROW, UPCOMING, DONE};
+
+    private enum View {ALL, TODAY, TOMORROW, UPCOMING, DONE}
+    private enum StatsView {DAILY, MONTHLY};
+
     private View currentView;
+    private StatsView currentStatsView;
     private LineChart<String, Number> tasksLineChart;
 
     @FXML
@@ -74,7 +81,8 @@ public class MainController implements Initializable {
             signUpSubmitButton, addProjectButton2, submitAddProjectButton, hideAddProjectWindow, mainPaneHeader,
             cancelEditTaskButton, submitEditTaskButton, submitEditProjectButton, cancelEditProjectButton,
             removeProjectSubmitButton, removeTaskSubmitButton, removeProjectCancelButton, removeTaskCancelButton,
-            allTasksView, todayTasksView, tomorrowTasksView, upcomingTasksView, doneTasksView;
+            allTasksView, todayTasksView, tomorrowTasksView, upcomingTasksView, doneTasksView, dailyStatsView,
+            monthlyStatsView;
 
     @FXML
     private TextField usernameSignInInput, passwordSignInInput, usernameSignUpInput, passwordSignUpInput,
@@ -162,16 +170,36 @@ public class MainController implements Initializable {
             drawerImageClickHandler();
         });
         setCurrentView(View.ALL);
-        allTasksView.setOnMouseClicked(event -> { setCurrentView(View.ALL); });
-        allTasksBtn.setOnMouseClicked(event -> { setCurrentView(View.ALL); });
-        todayTasksView.setOnMouseClicked(event -> { setCurrentView(View.TODAY); });
-        todayTasksBtn.setOnMouseClicked(event -> { setCurrentView(View.TODAY); });
-        tomorrowTasksView.setOnMouseClicked(event -> { setCurrentView(View.TOMORROW); });
-        tomorrowTasksBtn.setOnMouseClicked(event -> { setCurrentView(View.TOMORROW); });
-        upcomingTasksView.setOnMouseClicked(event -> { setCurrentView(View.UPCOMING); });
-        upcomingTasksBtn.setOnMouseClicked(event -> { setCurrentView(View.UPCOMING); });
-        doneTasksView.setOnMouseClicked(event -> { setCurrentView(View.DONE); });
-        doneTasksBtn.setOnMouseClicked(event -> { setCurrentView(View.DONE); });
+        allTasksView.setOnMouseClicked(event -> {
+            setCurrentView(View.ALL);
+        });
+        allTasksBtn.setOnMouseClicked(event -> {
+            setCurrentView(View.ALL);
+        });
+        todayTasksView.setOnMouseClicked(event -> {
+            setCurrentView(View.TODAY);
+        });
+        todayTasksBtn.setOnMouseClicked(event -> {
+            setCurrentView(View.TODAY);
+        });
+        tomorrowTasksView.setOnMouseClicked(event -> {
+            setCurrentView(View.TOMORROW);
+        });
+        tomorrowTasksBtn.setOnMouseClicked(event -> {
+            setCurrentView(View.TOMORROW);
+        });
+        upcomingTasksView.setOnMouseClicked(event -> {
+            setCurrentView(View.UPCOMING);
+        });
+        upcomingTasksBtn.setOnMouseClicked(event -> {
+            setCurrentView(View.UPCOMING);
+        });
+        doneTasksView.setOnMouseClicked(event -> {
+            setCurrentView(View.DONE);
+        });
+        doneTasksBtn.setOnMouseClicked(event -> {
+            setCurrentView(View.DONE);
+        });
     }
 
     private void setStatsPaneEvents() {
@@ -193,9 +221,18 @@ public class MainController implements Initializable {
         exitTaskStatsPaneBtn.setOnMouseClicked(event -> {
             hideTaskStatsPane(false);
         });
+
+        // set default stats view - daily view
+        setCurrentStatsView(StatsView.DAILY);
+        dailyStatsView.setOnMouseClicked(event -> {
+            setCurrentStatsView(StatsView.DAILY);
+        });
+        monthlyStatsView.setOnMouseClicked(event -> {
+            setCurrentStatsView(StatsView.MONTHLY);
+        });
     }
 
-    private void setLoginWindowEvents () {
+    private void setLoginWindowEvents() {
         loginWindow.setVisible(false);
         setSignInEvents();
         setSignUpEvents();
@@ -222,12 +259,55 @@ public class MainController implements Initializable {
         setRemoveTaskEvents();
     }
 
+    private void setCurrentStatsView(StatsView currentView) {
+        if (currentView == StatsView.DAILY) {
+            markActiveStatsView(dailyStatsView);
+        }
+        if (currentView == StatsView.MONTHLY) {
+            markActiveStatsView(monthlyStatsView);
+        }
+
+        try {
+            loadStatsGraph();
+        } catch (ParseException e) {
+            showErrorAlert("Nie udało się pobrać danych statystycznych");
+        }
+    }
+
+    private HashMap<Button, StatsView> getButtonStatsViewHashMap() {
+        HashMap<Button, StatsView> buttonStatsViewHashMap = new HashMap<>();
+        buttonStatsViewHashMap.put(dailyStatsView, StatsView.DAILY);
+        buttonStatsViewHashMap.put(monthlyStatsView, StatsView.MONTHLY);
+        return buttonStatsViewHashMap;
+    }
+
+    private void markActiveStatsView(Button currentViewButton) {
+        HashMap<Button, StatsView> buttonStatsViewHashMap = getButtonStatsViewHashMap();
+        currentStatsView = buttonStatsViewHashMap.get(currentViewButton);
+        Button[] statsViewsButtons = {dailyStatsView, monthlyStatsView};
+
+        for (Button statsButton : statsViewsButtons) {
+            statsButton.setStyle("-fx-background-color: #fff; -fx-text-fill: #a9a9a9");
+        }
+        currentViewButton.setStyle("-fx-background-color: #fe5c44; -fx-text-fill: #fff");
+    }
+
     private void setCurrentView(View currentView) {
-        if (currentView == View.ALL) { markActiveView(allTasksView); }
-        if (currentView == View.TODAY) { markActiveView(todayTasksView); }
-        if (currentView == View.TOMORROW) { markActiveView(tomorrowTasksView); }
-        if (currentView == View.UPCOMING) { markActiveView(upcomingTasksView); }
-        if (currentView == View.DONE) { markActiveView(doneTasksView); }
+        if (currentView == View.ALL) {
+            markActiveView(allTasksView);
+        }
+        if (currentView == View.TODAY) {
+            markActiveView(todayTasksView);
+        }
+        if (currentView == View.TOMORROW) {
+            markActiveView(tomorrowTasksView);
+        }
+        if (currentView == View.UPCOMING) {
+            markActiveView(upcomingTasksView);
+        }
+        if (currentView == View.DONE) {
+            markActiveView(doneTasksView);
+        }
     }
 
     private HashMap<Button, View> getButtonViewHashMap() {
@@ -240,12 +320,14 @@ public class MainController implements Initializable {
         return buttonViewHashMap;
     }
 
-    private void markActiveView(Button currentManuItem) {
+    private void markActiveView(Button currentMenuItem) {
         HashMap<Button, View> buttonViewHashMap = getButtonViewHashMap();
-        currentView = buttonViewHashMap.get(currentManuItem);
+        currentView = buttonViewHashMap.get(currentMenuItem);
         Button[] menuItems = {allTasksView, todayTasksView, tomorrowTasksView, upcomingTasksView, doneTasksView};
-        for (Button menuItem : menuItems) { menuItem.setStyle("-fx-background-color: #fff"); }
-        currentManuItem.setStyle("-fx-background-color:  #f5f5f5");
+        for (Button menuItem : menuItems) {
+            menuItem.setStyle("-fx-background-color: #fff");
+        }
+        currentMenuItem.setStyle("-fx-background-color:  #f5f5f5");
         fillTaskElements();
     }
 
@@ -290,6 +372,87 @@ public class MainController implements Initializable {
             calendar.add(Calendar.DATE, 1);
         }
         return tasksSeriesData;
+    }
+
+    private Map<String, Integer> getMonthlyDoneTasks() throws ParseException {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+        List<Task> doneTasks = getDoneTasks();
+
+        Map<String, List<Integer>> doneTasksSeriesData = new LinkedHashMap<>();
+        Map<String, Integer> dailyDoneTasksCountedSeriesData = new LinkedHashMap<>();
+        Locale locale = new Locale("pl");
+
+        for (int month = 1; month <= 12; month++) {
+            String monthName = Month.of(month).getDisplayName(TextStyle.FULL_STANDALONE, locale);
+            doneTasksSeriesData.put(monthName, new ArrayList<>());
+        }
+
+        for (Task task : doneTasks) {
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(formatter.parse(task.getDoneAt()));
+            int month = calendar.get(Calendar.MONTH) + 1;
+            String monthName = Month.of(month).getDisplayName(TextStyle.FULL_STANDALONE, locale);
+            doneTasksSeriesData.get(monthName).add(task.getId());
+        }
+        doneTasksSeriesData.forEach((key, values) -> {
+            dailyDoneTasksCountedSeriesData.put(key, values.size());
+        });
+
+
+        String[] monthList = doneTasksSeriesData.keySet().stream().toList().toArray(new String[0]);
+        rotateSeriesDataByCurrentMonth(monthList, dailyDoneTasksCountedSeriesData);
+        return dailyDoneTasksCountedSeriesData;
+    }
+
+    private void rotateSeriesDataByCurrentMonth(String[] monthList, Map<String, Integer> seriesData) {
+        Date date = new Date();
+        Calendar calendar = new GregorianCalendar();
+        calendar.setTime(date);
+        int currentMonth = calendar.get(Calendar.MONTH) + 1;
+        Collections.rotate(Arrays.asList(monthList), -currentMonth);
+        for (int i = 0; i <= 12 - currentMonth; i++) {
+            seriesData.get(monthList[i]);
+        }
+    }
+
+    private Map<String, Integer> getMonthlyNewTasks() throws ParseException {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+        List<Task> newTasks = getTaskList(true);
+        Map<String, List<Integer>> newTasksSeriesData = new LinkedHashMap<>(12);
+        Map<String, Integer> dailyNewTasksCountedSeriesData = new LinkedHashMap<>(12, 1, true);
+        Locale locale = new Locale("pl");
+
+        for (int month = 1; month <= 12; month++) {
+            String monthName = Month.of(month).getDisplayName(TextStyle.FULL_STANDALONE, locale);
+            newTasksSeriesData.put(monthName, new ArrayList<>());
+        }
+
+        for (Task task : newTasks) {
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(formatter.parse(task.getCreatedAt()));
+            int month = calendar.get(Calendar.MONTH) + 1;
+            String monthName = Month.of(month).getDisplayName(TextStyle.FULL_STANDALONE, locale);
+            newTasksSeriesData.get(monthName).add(task.getId());
+        }
+        newTasksSeriesData.forEach((key, values) -> {
+            dailyNewTasksCountedSeriesData.put(key, values.size());
+        });
+
+        String[] monthList = newTasksSeriesData.keySet().stream().toList().toArray(new String[0]);
+        rotateSeriesDataByCurrentMonth(monthList, dailyNewTasksCountedSeriesData);
+
+        // reorder LinkedHashMap to end with current month
+//        Date date = new Date();
+//        Calendar calendar = new GregorianCalendar();
+//        calendar.setTime(date);
+//        int currentMonth = calendar.get(Calendar.MONTH) + 1;
+
+//        Collections.rotate(Arrays.asList(monthList), -currentMonth);
+//        for (int i = 0; i <= 12 - currentMonth; i++) {
+//            dailyNewTasksCountedSeriesData.get(monthList[i]);
+//        }
+
+        return dailyNewTasksCountedSeriesData;
     }
 
     private Map<String, Integer> getDailyDoneTasks() throws ParseException {
@@ -337,17 +500,12 @@ public class MainController implements Initializable {
         return dailyNewTasksCountedSeriesData;
     }
 
-    private void loadStatsGraph() throws ParseException {
-        if (tasksLineChart != null) {
-            chartPlaceholder.getChildren().remove(tasksLineChart);
-        }
-
-        XYChart.Series<String, Number> newTasksSeries = new XYChart.Series<>();
-        XYChart.Series<String, Number> doneTasksSeries = new XYChart.Series<>();
-        final CategoryAxis xAxis = new CategoryAxis();
-        final NumberAxis yAxis = new NumberAxis();
-        tasksLineChart = new LineChart<>(xAxis,yAxis);
-        tasksLineChart.setId("tasksLineChart");
+    private void loadDailyGraph(
+            NumberAxis yAxis,
+            CategoryAxis xAxis,
+            XYChart.Series<String, Number> newTasksSeries,
+            XYChart.Series<String, Number> doneTasksSeries
+    ) throws ParseException {
         yAxis.setLabel("Liczba zadań");
         xAxis.setLabel("Dzień");
         newTasksSeries.setName("Nowe zadania");
@@ -361,8 +519,11 @@ public class MainController implements Initializable {
         dailyNewTasks.forEach((createdAt, tasksCount) -> {
             newTasksSeries.getData().add(new XYChart.Data<>(createdAt, tasksCount));
         });
-        List<Integer> tasksCount = new ArrayList<>(dailyNewTasks.values());  // yAxis upper limit
-        int topTasksCount = tasksCount.stream().reduce(Integer.MIN_VALUE, Integer::max);
+        List<Integer> dailyDoneTasksCount = new ArrayList<>(dailyDoneTasks.values());  // yAxis upper limit
+        List<Integer> dailyNewTasksCount = new ArrayList<>(dailyNewTasks.values());  // yAxis upper limit
+        int topDailyDoneTasksCount = dailyDoneTasksCount.stream().reduce(Integer.MIN_VALUE, Integer::max);
+        int topDailyNewTasksCount = dailyNewTasksCount.stream().reduce(Integer.MIN_VALUE, Integer::max);
+        int topTasksCount = Math.max(topDailyDoneTasksCount, topDailyNewTasksCount);
         int nearestRoundUpperBound = (topTasksCount + 5) - (topTasksCount % 5);
         yAxis.setAutoRanging(false);
         yAxis.setLowerBound(0);
@@ -379,7 +540,70 @@ public class MainController implements Initializable {
         chartPlaceholder.getChildren().add(tasksLineChart);
     }
 
+    private void loadMonthlyGraph(
+            NumberAxis yAxis,
+            CategoryAxis xAxis,
+            XYChart.Series<String, Number> newTasksSeries,
+            XYChart.Series<String, Number> doneTasksSeries
+    ) throws ParseException {
+        yAxis.setLabel("Liczba zadań");
+        xAxis.setLabel("Miesiąc");
+        newTasksSeries.setName("Nowe zadania");
+        doneTasksSeries.setName("Ukończone zadania");
+        xAxis.setTickLabelRotation(20);
+
+        Map<String, Integer> monthlyDoneTasks = getMonthlyDoneTasks();
+        Map<String, Integer> monthlyNewTasks = getMonthlyNewTasks();
+
+        monthlyDoneTasks.forEach((doneAt, tasksCount) -> {
+            doneTasksSeries.getData().add(new XYChart.Data<>(doneAt, tasksCount));
+        });
+        monthlyNewTasks.forEach((createdAt, tasksCount) -> {
+            newTasksSeries.getData().add(new XYChart.Data<>(createdAt, tasksCount));
+        });
+
+        List<Integer> monthlyDoneTasksCount = new ArrayList<>(monthlyDoneTasks.values());  // yAxis upper limit
+        List<Integer> monthlyNewTasksCount = new ArrayList<>(monthlyNewTasks.values());  // yAxis upper limit
+        int topMonthlyDoneTasksCount = monthlyDoneTasksCount.stream().reduce(Integer.MIN_VALUE, Integer::max);
+        int topMonthlyNewTasksCount = monthlyNewTasksCount.stream().reduce(Integer.MIN_VALUE, Integer::max);
+        int topTasksCount = Math.max(topMonthlyDoneTasksCount, topMonthlyNewTasksCount);
+        int nearestRoundUpperBound = (topTasksCount + 5) - (topTasksCount % 5);
+        yAxis.setAutoRanging(false);
+        yAxis.setLowerBound(0);
+        yAxis.setUpperBound(nearestRoundUpperBound);
+        yAxis.setTickUnit(1);
+        yAxis.setMinorTickVisible(false);
+
+        AnchorPane.setTopAnchor(tasksLineChart, 0.0);
+        AnchorPane.setBottomAnchor(tasksLineChart, 10.0);
+        AnchorPane.setLeftAnchor(tasksLineChart, 10.0);
+        AnchorPane.setRightAnchor(tasksLineChart, 10.0);
+        tasksLineChart.getData().add(newTasksSeries);
+        tasksLineChart.getData().add(doneTasksSeries);
+        chartPlaceholder.getChildren().add(tasksLineChart);
+    }
+
+    private void loadStatsGraph() throws ParseException {
+        if (tasksLineChart != null) {
+            chartPlaceholder.getChildren().remove(tasksLineChart);
+        }
+        XYChart.Series<String, Number> newTasksSeries = new XYChart.Series<>();
+        XYChart.Series<String, Number> doneTasksSeries = new XYChart.Series<>();
+        final CategoryAxis xAxis = new CategoryAxis();
+        final NumberAxis yAxis = new NumberAxis();
+        tasksLineChart = new LineChart<>(xAxis, yAxis);
+        tasksLineChart.setId("tasksLineChart");
+
+        if (currentStatsView == StatsView.DAILY) {
+            loadDailyGraph(yAxis, xAxis, newTasksSeries, doneTasksSeries);
+        }
+        if (currentStatsView == StatsView.MONTHLY) {
+            loadMonthlyGraph(yAxis, xAxis, newTasksSeries, doneTasksSeries);
+        }
+    }
+
     private void showTaskStatsPane() {
+        setCurrentStatsView(StatsView.DAILY);
         try {
             loadStatsGraph();
         } catch (ParseException e) {
@@ -412,7 +636,7 @@ public class MainController implements Initializable {
         taskStatsPaneState = false;
     }
 
-    private void setRemoveTaskEvents(){
+    private void setRemoveTaskEvents() {
         removeTaskSubmitButton.setOnMouseClicked(event -> {
             removeTaskSubmitHandler();
         });
@@ -667,7 +891,7 @@ public class MainController implements Initializable {
                 @Override
                 public void handle(MouseEvent mouseEvent) {
                     if (mouseEvent.getButton() != MouseButton.SECONDARY) {
-                        TaskElement taskElement = ((TaskElement)((AnchorPane)mouseEvent.getSource()).getParent());
+                        TaskElement taskElement = ((TaskElement) ((AnchorPane) mouseEvent.getSource()).getParent());
                         showTaskEditWindow(taskElement);
                     }
                     mouseEvent.consume();
@@ -678,8 +902,8 @@ public class MainController implements Initializable {
                 @Override
                 public void handle(MouseEvent mouseEvent) {
                     if (mouseEvent.getButton() != MouseButton.SECONDARY) {
-                        ImageView source = ((ImageView)mouseEvent.getSource());
-                        TaskElement taskElement = ((TaskElement)((ImageView)mouseEvent.getSource()).getParent());
+                        ImageView source = ((ImageView) mouseEvent.getSource());
+                        TaskElement taskElement = ((TaskElement) ((ImageView) mouseEvent.getSource()).getParent());
                         String newImageSource;
                         if (taskElement.done) {
                             newImageSource = String.valueOf(getClass().getResource("/images/task_to_do.png"));
@@ -698,7 +922,9 @@ public class MainController implements Initializable {
                 public void handle(MouseEvent mouseEvent) {
                     if (mouseEvent.getButton() != MouseButton.SECONDARY) {
                         Integer taskId = (Integer) ((ImageView) mouseEvent.getSource()).getUserData();
-                        if (taskId != null) { showDeleteTaskPrompt(taskId); }
+                        if (taskId != null) {
+                            showDeleteTaskPrompt(taskId);
+                        }
                     }
                 }
             });
